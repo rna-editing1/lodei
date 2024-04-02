@@ -1,0 +1,12 @@
+# ignore everything
+*
+
+# But not these files:
+!/**/
+!.gitignore
+!*.py
+!*.toml
+!*.md
+
+# ...even if they are in subdirectories
+!*/
