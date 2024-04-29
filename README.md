@@ -20,7 +20,7 @@ LoDEI is free software and licensed under GPLv3.
 
 ### System Requirements
 
-* Linux operating system
+* Linux operating system (our systems run on Ubuntu 22.04)
 * Podman/Docker *or* conda/mamba
 
 To run LoDEI we recommend to use the provided [Podman/Docker](#installation-and-usage-via-podman) image or to manually install LoDEI into a [conda/mamba](#installation-and-usage-via-conda-and-pip) environment.
@@ -28,7 +28,7 @@ To run LoDEI we recommend to use the provided [Podman/Docker](#installation-and-
 
 ## Test Data
 
-We provide a small test dataset (~15MB, https://doi.org/10.5281/zenodo.10907020) that contains all required input files to run `lodei find` to demonstrate the proper usage for detecting differentially edited A-to-I regions.
+We provide a small test dataset (~15MB, https://zenodo.org/doi/10.5281/zenodo.10907019) that contains all required input files to run `lodei find` to demonstrate the proper usage for detecting differentially edited A-to-I regions.
 The test dataset contains sorted BAM files belonging to two different conditions that are thought to be compared against each other, genomic annotations, and the nucleotide sequences for three genes of the human genome.
 
 Let's create an example directory and download the testdata:
@@ -96,10 +96,10 @@ Independent the way you choose, we recommend to follow the instructions to run L
 Common Linux distributions are typically shipped with Podman. Podman is a tool to create, run and maintain containers.
 For a detailed introduction of Podman we refer the reader to the primary documentation at https://podman.io.
 
-Get the container image via 
+Get the container image from DockerHub (https://hub.docker.com/r/lodei/lodei) via 
 
 ```
-podman pull lodei/lodei:latest
+podman pull docker.io/lodei/lodei:latest
 ```
 
 Verify that the new image is part of your container image storage. You should find an entry similar to the example shown below:
@@ -349,6 +349,8 @@ $ tree -L 1
 
 2 directories, 5 files
 ```
+
+The output for the provided test dataset is available at Zenodo: https://zenodo.org/records/11082558
 
 
 
