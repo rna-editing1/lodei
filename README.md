@@ -345,7 +345,7 @@ windows
 
 If windows achieve a q value < 0.1, LoDEI creates additional output files for each mismatch pair for windows with a q value < 0.1 according to the naming scheme `windows_qfiltered_XY.txt`, where X and Y are the nucleotide mismatches.
 
-The output for the provided test dataset is available at Zenodo: https://zenodo.org/records/11082558
+The output for the provided test dataset is available at Zenodo: https://zenodo.org/doi/10.5281/zenodo.10907019
 
 
 
