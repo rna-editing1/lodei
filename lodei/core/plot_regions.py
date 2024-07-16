@@ -234,7 +234,7 @@ def make_plots(args):
                                 nuc_ref=nuc_ref, nuc_edit=nuc_edit,
                                 library=args["library"], debug=False)
             # print("get_data() Done")
-            df = eif.calc_local_EI(data, hwidth=args["window_size"], step_size=args["step_size"],
+            df = eif.calc_local_EI(data, hwidth=args["window_size"], step_size=2*args["window_size"]+1,
                                    mincoverage=args["min_coverage"], rm_snp=args["rm_snps"])
             # print("calc_local_EI() Done")
 

@@ -43,11 +43,11 @@ tar -xzf test_data.tar.gz
 ```
 
 After unpacking, the directory `data_testrun` should be in your `example` directory (see below).
-The subdirectory `data_testrun/annotation` contains genomic sequences in fasta format and genomic annotations in the GFF3 format.
+The subdirectory `data_testrun/annotation` contains genomic sequences in the fasta format and genomic annotations in the GFF3 format.
 
 The `data_testrun/bam` subdirectory contains BAM files for 10 samples whereas samples 01-05 belong to set 1 and samples 06-10 belong to set 2.
 
-*DO NO CHANGE ANYTHING IN THE `data_testrun` DIRECTORY*
+*DO NOT CHANGE ANYTHING IN THE `data_testrun` DIRECTORY*
 
 ```
 user@linux ~/example $ tree
@@ -306,9 +306,20 @@ Wait until LoDEI finishes the calculation (~1-2min) and have a look at the [outp
 
 ## Output
 
-The primary outputs are BED-format-like plaintext files containing genomic coordinates and their differential editing signals and q-values.
-All output files contain a header.
-LoDEI computes differential signals for all possible mismatch pairs.
+The primary outputs are BED-format-like plaintext files containing the genomic coordinates, their differential editing signals and q-values of all windows. The first line is the header. Each subsequent line corresponds to a single window.
+
+| Column name | Description |
+| --- | ----------- |
+| chrom | The name of the chromosome (e.g. chr2, 2) where the window was detected (string) |
+| wstart | The starting position of the window (int) |
+| wend | The stopping position of the window (int) |
+| name | Contains the gene name where the window was detected or empty (string) |
+| wEI | The calculated differential signal (see eq. 4 in the publication) (float) |
+| strand | Defines the strand where the differential signals was detected. Either "+" or "-" (char) |
+| q_value | Calculated q value of the detected wEI signal (float)|
+
+LoDEI computes differential signals for all possible mismatch pairs. As a consequence, for each nucleotide mismatch X and Y an output file is generated according to the following scheme `/windows/windows_XY.txt` where X and Y are the nucleotide mismatches. Consequently, the file `/windows/windows_AG.txt` should be examined in case of A-to-I editing.
+
 The results of all mismatches are located in the sub-directoy `/windows` in the output directory:
 
 ```
@@ -332,23 +343,7 @@ windows
 0 directories, 12 files
 ```
 
-By default LoDEI applies a q-value filter of 0.1 to all files in the `/windows` directory and merges overlapping coordinates if necessary.
-These filtered and merged files are located in the output directory and are named according to the following scheme `windows_qfiltered_merged_XY.txt` where X and Y are the nucleotide mismatches.
-
-```
-$ cd ~/example/output_test
-$ tree -L 1
-.
-├── find_main.log
-├── logs
-├── windows
-├── windows_qfiltered_AG.txt
-├── windows_qfiltered_merged_AG.txt
-├── windows_qfiltered_merged_TG.txt
-└── windows_qfiltered_TG.txt
-
-2 directories, 5 files
-```
+If windows achieve a q value < 0.1, LoDEI creates additional output files for each mismatch pair for windows with a q value < 0.1 according to the naming scheme `windows_qfiltered_XY.txt`, where X and Y are the nucleotide mismatches.
 
 The output for the provided test dataset is available at Zenodo: https://zenodo.org/records/11082558
 

@@ -75,13 +75,9 @@ def main():
         help="Optional run ID. [Default: 1]")
 
     parser_find.add_argument(
-        '-w', '--window_size', dest='window_size', type=int, default=50, required=False,
-        help="""Half-window size for editing index calculation.
-        The complete window size is: 2*w+1 [Default: 50]""")
-
-    parser_find.add_argument(
-        '-s', '--step_size', dest='step_size', type=int, default=25, required=False,
-        help="The editing index windows will be shifted by -s positions. [Default: 25]")
+        '-w', '--window_size', dest='window_size', type=int, default=25, required=False,
+        help="""Half-window size for editing index calculation. Must be between 10 and 50.
+        The complete window size is: 2*w+1 [Default: 25]""")
 
     parser_find.add_argument(
         '-l', '--library', dest='library', type=str, default="SR", required=False,
@@ -141,13 +137,9 @@ def main():
         help="Output directory. Plots will be automatically named using information in the provided -p/--plotregions file.")
 
     parser_plot_regions.add_argument(
-        '-w', '--window_size', dest='window_size', type=int, default=50, required=False,
-        help="""Half-window size for editing index calculation.
-        The complete window size is: 2*w+1 [Default: 50]""")
-
-    parser_plot_regions.add_argument(
-        '-s', '--step_size', dest='step_size', type=int, default=15, required=False,
-        help="The editing index windows will be shifted by -s positions. [Default: 15]")
+        '-w', '--window_size', dest='window_size', type=int, default=25, required=False,
+        help="""Half-window size for editing index calculation. Must be between 10 and 50.
+        The complete window size is: 2*w+1 [Default: 25]""")
 
     parser_plot_regions.add_argument(
         '-r', '--ref', dest='reference', type=str, default="A", required=False,
@@ -223,7 +215,7 @@ def testrun(args):
                    'fasta': os.path.join(args["directory"], "annotation/genome.fa"),
                    'gff': os.path.join(args["directory"], "annotation/test_anno.gff3"),
                    'output': f'{outpath}',
-                   'cores': 3, 'id': 1, 'window_size': 50, 'step_size': 25,
+                   'cores': 3, 'id': 1, 'window_size': 50, 
                    'library': 'SR',
                    'min_coverage': 5, 'rm_snps': False, 'subprocessid': 0,
                    'self': False, 'verbose': True}
@@ -244,7 +236,7 @@ def testrun(args):
                    'fasta': os.path.join(args["directory"], "annotation/genome.fa"),
                    'regions': os.path.join(args["directory"], "annotation/example_plot_regions.txt"),
                    'output': os.path.join(outpath, "plotregions"),
-                   'window_size': 50, 'step_size': 15,
+                   'window_size': 50, 
                    'library': 'SR',
                    'min_coverage': 5, "rm_snps": True}
     print("lodei testrun: 'lodei plotregion' start")

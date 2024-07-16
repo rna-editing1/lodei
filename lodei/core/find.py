@@ -27,7 +27,10 @@ from subprocess import Popen, PIPE
 
 
 def find(args):
+    if args["window_size"] < 10 or args["window_size"] > 50:
+        raise Exception(f"Command line argument -w/--window_size needs to be an integer in between 10 and 50.")
     args["pairs"] = ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
+    args["step_size"] = 2*args["window_size"]+1
     path = os.path.abspath(args["output"])
     if args["self"] is False:
         # check if output directory exists and generate if not
@@ -90,16 +93,6 @@ def find(args):
             logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: cutoffs {p}: {cutoff_neg}, {cutoff_pos} | #neg: {counts_neg}, #pos: {counts_pos}, #total: {tmp.shape[0]}")
             if tmp.shape[0] >= 1:
                 tmp.to_csv(f"{path}/windows_qfiltered_{p}.txt", header=True, index=False, sep="\t")
-
-                tmp_plus = tmp.loc[tmp["strand"] == "+", :]
-                tmp_minus = tmp.loc[tmp["strand"] == "-", :]
-
-                tmp_plus_merged = eif.merge_windows(tmp_plus)
-                tmp_minus_merged = eif.merge_windows(tmp_minus)
-
-                merged = pd.concat([tmp_plus_merged, tmp_minus_merged])
-                merged.sort_values(by=["chrom", "start"], inplace=True)
-                merged.to_csv(f"{path}/windows_qfiltered_merged_{p}.txt", header=True, index=False, sep="\t")
             else:
                 logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: No windows passed the q-value filter for {p}.")
         logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: q-value calculation and window filtering completed")
@@ -242,9 +235,6 @@ def run_mp(args):
         cmd.append("-w")
         cmd.append(str(args["window_size"]))
 
-        cmd.append("-s")
-        cmd.append(str(args["step_size"]))
-
         cmd.append("-m")
         cmd.append(str(args["min_coverage"]))
 
@@ -300,7 +290,6 @@ def print_info(args):
     msg += f"fasta       : {args['fasta']}\n"
     msg += f"cores       : {args['cores']}\n"
     msg += f"window_size : {args['window_size']}\n"
-    msg += f"step_size   : {args['step_size']}\n"
     msg += f"library type: {args['library']}\n"
     msg += f"min-coverage: {args['min_coverage']}\n"
     msg += f"remove SNPs : {args['rm_snps']}\n"

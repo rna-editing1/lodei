@@ -4,10 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lodei"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
-  { name="author 1", email="author@example.com" },
-  { name="author 2", email="author2@example.com" }
+  { name="author 1", email="author@example.com" }
 ]
 description = "A small example package"
 readme = "README.md"
