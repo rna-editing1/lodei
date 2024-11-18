@@ -17,6 +17,11 @@ The primary input for `lodei find` are sorted BAM files as produced by NGS-read 
 
 LoDEI is free software and licensed under GPLv3.
 
+If you use LoDEI, please cite https://doi.org/10.1038/s41467-024-53298-y
+
+## Publication
+
+Torkler, P., Sauer, M., Schwartz, U. et al. LoDEI: a robust and sensitive tool to detect transcriptome-wide differential A-to-I editing in RNA-seq data. Nat Commun 15, 9121 (2024). https://doi.org/10.1038/s41467-024-53298-y
 
 ### System Requirements
 
