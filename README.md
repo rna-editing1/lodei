@@ -19,10 +19,6 @@ LoDEI is free software and licensed under GPLv3.
 
 If you use LoDEI, please cite https://doi.org/10.1038/s41467-024-53298-y
 
-## Publication
-
-Torkler, P., Sauer, M., Schwartz, U. et al. LoDEI: a robust and sensitive tool to detect transcriptome-wide differential A-to-I editing in RNA-seq data. Nat Commun 15, 9121 (2024). https://doi.org/10.1038/s41467-024-53298-y
-
 ### System Requirements
 
 * Linux operating system (our systems run on Ubuntu 22.04)
@@ -30,6 +26,9 @@ Torkler, P., Sauer, M., Schwartz, U. et al. LoDEI: a robust and sensitive tool t
 
 To run LoDEI we recommend to use the provided [Podman/Docker](#installation-and-usage-via-podman) image or to manually install LoDEI into a [conda/mamba](#installation-and-usage-via-conda-and-pip) environment.
 
+## Publication
+
+Torkler, P., Sauer, M., Schwartz, U. et al. LoDEI: a robust and sensitive tool to detect transcriptome-wide differential A-to-I editing in RNA-seq data. Nat Commun 15, 9121 (2024). https://doi.org/10.1038/s41467-024-53298-y
 
 ## Test Data
 
