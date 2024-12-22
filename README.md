@@ -88,7 +88,7 @@ user@linux ~/example $ tree
 
 ## Installation
 
-Currently, two ways exist to install and use LoDEI:
+Install LoDEI by using one of the following ways:
 
 1. use the provided [Podman/Docker](#installation-and-usage-via-podman) image.
 2. use the [conda/mamba](#installation-and-usage-via-conda-and-pip) package manager to install dependencies and LoDEI manually (LoDEI cannot be installed via `conda install` yet).

@@ -7,6 +7,8 @@
 !*.py
 !*.toml
 !*.md
+!Containerfile
+!.containerignore
 
 # ...even if they are in subdirectories
 !*/

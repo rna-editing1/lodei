@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A small example package"
 readme = "README.md"
-requires-python = ">=3.8.16"
+requires-python = ">=3.7"
 
 
 [project.scripts]
