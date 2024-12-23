@@ -24,7 +24,16 @@ If you use LoDEI, please cite https://doi.org/10.1038/s41467-024-53298-y
 * Linux operating system (our systems run on Ubuntu 22.04)
 * Podman/Docker *or* conda/mamba
 
-To run LoDEI we recommend to use the provided [Podman/Docker](#installation-and-usage-via-podman) image or to manually install LoDEI into a [conda/mamba](#installation-and-usage-via-conda-and-pip) environment.
+### Installation
+
+Prior to installation, we recommend to follow the instructions of the provided [test data](#test-data) to be able to verify a proper installation.
+
+Install LoDEI by using one of the following ways:
+
+1. use the [conda/mamba](#installation-and-usage-via-conda) package manager to install LoDEI.
+2. use the provided [Podman/Docker](#installation-and-usage-via-podman) image.
+3. build a Podman/Docker image locally by using the provided Containerfile.
+
 
 ## Publication
 
@@ -86,16 +95,63 @@ user@linux ~/example $ tree
 `-- test_data.tar.gz
 ```
 
-## Installation
+## Installation and Usage via conda
 
-Install LoDEI by using one of the following ways:
+Generate a new environment and install LoDEI:
 
-1. use the provided [Podman/Docker](#installation-and-usage-via-podman) image.
-2. use the [conda/mamba](#installation-and-usage-via-conda-and-pip) package manager to install dependencies and LoDEI manually (LoDEI cannot be installed via `conda install` yet).
+```
+conda create -c conda-forge -c bioconda --name lodei
+conda activate lodei
+conda install lodei
+```
 
-Independent the way you choose, we recommend to follow the instructions to run LoDEI on the provided [test data](#test-data) to familiarize with the usage and verify a proper installation.
+### Run LoDEI Using Conda
 
-### Installation and Usage via Podman
+To verify a proper installation we run LoDEI on the provided [test dataset](#test-data).
+
+Make sure to get back into your example directory where your unpacked the [test dataset](#test-data). 
+Create a new output directory at `~/example` where LoDEI can save the results and finally move into the example data directory:
+
+```
+cd ~/example
+mkdir output_conda
+cd data_testrun
+```
+
+Run LoDEI on the testdata:
+
+```
+lodei find \
+--group1 bam/s01.bam bam/s02.bam bam/s03.bam bam/s04.bam bam/s05.bam \
+--group2 bam/s06.bam bam/s07.bam bam/s08.bam bam/s09.bam bam/s10.bam \
+-f annotation/genome.fa \
+-g annotation/test_anno.gff3 \
+-o ../output_conda \
+-c 3 --library SR --min_coverage 5
+```
+
+Detailed explanation of parameters and arguments:
+
+* `--group1 ...` 
+  * provide the list of sorted BAM files (separated by space) of samples belonging to group 1.
+* `--group2 ...`
+  * provide the list of sorted BAM files (separated by space) of samples belonging to group 2.
+* `-f annotation/genome.fa`
+  * provide the reference genome used to generate the provided BAM files.
+* `annotation/test_anno.gff3`
+  * LoDEI caculates differential editing for all entries of the provided annotation file.
+* `-o ../output_conda`
+  * define the output directory. LoDEI generates many automatically named files.
+* `-c 3`
+  * Number of used CPU cores.
+* `--library SR`
+  * provide the strandedness of your BAM files. SR = reverse stranded, SF = forward stranded, U = unstranded. Note, currently LoDEI only handles stranded single-end or unstranded RNA-seq data. To run stranded paired-end samples you need to generate BAM files for `_1` and `_2` reads seperately and run LoDEI for the resulting BAM files individually and merge the final results.
+* `--min_coverage 5`
+  * only consider single positions that have a coverage >= min_coverage in all samples.
+
+Wait until LoDEI finishes the calculation (~1-2min) and have a look at the [output](#output).
+
+## Installation and Usage via Podman
 
 Common Linux distributions are typically shipped with Podman. Podman is a tool to create, run and maintain containers.
 For a detailed introduction of Podman we refer the reader to the primary documentation at https://podman.io.
@@ -162,11 +218,11 @@ optional arguments:
   -v, --verbose         Verbose mode. [Default: off]
 ```
 
-#### Run LoDEI Using Podman
+### Run LoDEI Using Podman
 
 To verify a proper installation we run LoDEI on the provided [test dataset](#test-data).
 
-#### Mount a volume/directory into the container
+### Mount a volume/directory into the container
 
 The LoDEI container needs access to the provided files (annotations and bam files) as well as a directory where it can save results to.
 The `-v` option is needed to make directories of your host file system available in the container.
@@ -181,7 +237,7 @@ Option can be `ro` for _read only_ and `rw` for _read and write_.
 
 Note, the directory in the container does not need to exist there. You can specify any directory.
 
-##### Run LoDEI
+#### Run LoDEI
 
 If you've followed the steps of the [test dataset](#test-data) the directory `~/example` exists.
 Switch to the `~/example` directory and create a new directory where LoDEI shall save all output into:
@@ -233,78 +289,6 @@ Detailed explanation of parameters and arguments:
     * provide the strandedness of your BAM files. SR = reverse stranded, SF = forward stranded, U = unstranded. Note, currently LoDEI only handles stranded single-end or unstranded RNA-seq data. To run stranded paired-end samples you need to generate BAM files for `_1` and `_2` reads seperately and run LoDEI for the resulting BAM files individually and merge the final results.
 * `--min_coverage 5`
     * only consider single positions that have a coverage >= min_coverage in all samples.
-
-Wait until LoDEI finishes the calculation (~1-2min) and have a look at the [output](#output).
-
-### Installation and Usage via conda and pip
-
-Currently, LoDEI is not directly available via `conda`.
-Here, a new `conda` environment is created and requirements are installed.
-Next, LoDEI is downloaded and installed into the newly created environment.
-
-#### Create Environment and Install Dependencies
-
-Generate a new environment and install required packages:
-
-```
-conda create -c conda-forge -c bioconda --name lodei
-conda activate lodei
-conda install -y python=3.8 pysamstats=1.1.2 pandas=2.0.3 matplotlib=3.7.1
-```
-
-Download LoDEI and install it via `pip`.
-
-```
-cd ~
-git clone https://github.com/rna-editing1/lodei.git
-cd lodei
-# Make sure that the pyproject.toml of LoDEI is in your current directory
-# and that the correct conda environment is active
-python -m pip install . --no-deps --ignore-installed
-```
-
-#### Run LoDEI Using Conda
-
-To verify a proper installation we run LoDEI on the provided [test dataset](#test-data).
-
-Make sure to get back into your example directory where your unpacked the testdata, create a new output directory at `~/example` where LoDEI can save the results and finally move into the example data directory:
-
-```
-cd ~/example
-mkdir output_conda
-cd data_testrun
-```
-
-Run LoDEI on the testdata:
-
-```
-lodei find \
---group1 bam/s01.bam bam/s02.bam bam/s03.bam bam/s04.bam bam/s05.bam \
---group2 bam/s06.bam bam/s07.bam bam/s08.bam bam/s09.bam bam/s10.bam \
--f annotation/genome.fa \
--g annotation/test_anno.gff3 \
--o ../output_conda \
--c 3 --library SR --min_coverage 5
-```
-
-Detailed explanation of parameters and arguments:
-
-* `--group1 ...` 
-  * provide the list of sorted BAM files (separated by space) of samples belonging to group 1.
-* `--group2 ...`
-  * provide the list of sorted BAM files (separated by space) of samples belonging to group 2.
-* `-f annotation/genome.fa`
-  * provide the reference genome used to generate the provided BAM files.
-* `annotation/test_anno.gff3`
-  * LoDEI caculates differential editing for all entries of the provided annotation file.
-* `-o ../output_conda`
-  * define the output directory. LoDEI generates many automatically named files.
-* `-c 3`
-  * Number of used CPU cores.
-* `--library SR`
-  * provide the strandedness of your BAM files. SR = reverse stranded, SF = forward stranded, U = unstranded. Note, currently LoDEI only handles stranded single-end or unstranded RNA-seq data. To run stranded paired-end samples you need to generate BAM files for `_1` and `_2` reads seperately and run LoDEI for the resulting BAM files individually and merge the final results.
-* `--min_coverage 5`
-  * only consider single positions that have a coverage >= min_coverage in all samples.
 
 Wait until LoDEI finishes the calculation (~1-2min) and have a look at the [output](#output).
 
