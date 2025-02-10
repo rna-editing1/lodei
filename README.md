@@ -139,7 +139,7 @@ Detailed explanation of parameters and arguments:
 * `-f annotation/genome.fa`
   * provide the reference genome used to generate the provided BAM files.
 * `annotation/test_anno.gff3`
-  * LoDEI caculates differential editing for all entries of the provided annotation file.
+  * LoDEI caculates differential editing for all entries of the provided [annotation](#what-kind-of-annotation-file-do-i-need-to-use) file.
 * `-o ../output_conda`
   * define the output directory. LoDEI generates many automatically named files.
 * `-c 3`
@@ -148,6 +148,7 @@ Detailed explanation of parameters and arguments:
   * provide the strandedness of your BAM files. SR = reverse stranded, SF = forward stranded, U = unstranded. Note, currently LoDEI only handles stranded single-end or unstranded RNA-seq data. To run stranded paired-end samples you need to generate BAM files for `_1` and `_2` reads seperately and run LoDEI for the resulting BAM files individually and merge the final results.
 * `--min_coverage 5`
   * only consider single positions that have a coverage >= min_coverage in all samples.
+* [Should I use](#should-i-use---rm_snps) `--rm_snps`?
 
 Wait until LoDEI finishes the calculation (~1-2min) and have a look at the [output](#output).
 
@@ -280,7 +281,7 @@ Detailed explanation of parameters and arguments:
 * `-f /annotation/genome.fa`
     * provide the reference genome used to generate the provided BAM files.
 * `/annotation/test_anno.gff3`
-    * LoDEI caculates differential editing for all entries of the provided annotation file.
+    * LoDEI caculates differential editing for all entries of the provided [annotation](#what-kind-of-annotation-file-do-i-need-to-use) file.
 * `-o /output`
     * define the output directory. LoDEI generates many automatically named files.
 * `-c 3`
@@ -289,6 +290,7 @@ Detailed explanation of parameters and arguments:
     * provide the strandedness of your BAM files. SR = reverse stranded, SF = forward stranded, U = unstranded. Note, currently LoDEI only handles stranded single-end or unstranded RNA-seq data. To run stranded paired-end samples you need to generate BAM files for `_1` and `_2` reads seperately and run LoDEI for the resulting BAM files individually and merge the final results.
 * `--min_coverage 5`
     * only consider single positions that have a coverage >= min_coverage in all samples.
+* [Should I use](#should-i-use---rm_snps) `--rm_snps`?
 
 Wait until LoDEI finishes the calculation (~1-2min) and have a look at the [output](#output).
 
@@ -335,5 +337,27 @@ If windows achieve a q value < 0.1, LoDEI creates additional output files for ea
 
 The output for the provided test dataset is available at Zenodo: https://zenodo.org/doi/10.5281/zenodo.10907019
 
+## FAQ
+
+### What kind of annotation file do I need to use?
+
+The annotation file provided in GFF format that LoDEI takes as input should contain the genomic regions of interest for your analysis question. 
+LoDEI uses a sliding window approach. 
+For a given genomic region (that's an entry/line in your GFF), LoDEI calculates the differential editing for all windows that fit into that given region. 
+Thus, your GFF file should fulfill the following requirements: 
+
+* Make sure your GFF annotation file does not contain redundant entries. 
+The genomic locations in your file should be unique and not overlapping with each other. 
+Common genomic annotation files like basic gene annotation files obtained from gencodegenes.org should not be used without prior filtering since annotation files typically contain many redundant genomic locations since they contain genes, transcripts, and exons. A starting point for standard RNA-seq might be the set of protein-coding genes (but it depends on your experiment):
+```
+grep -P  "gene\t.*gene_type=protein_coding" gencode.v47.basic.annotation.gff3 > gencode.v47.basic.annotation_genes_protein_coding.gff3
+```
+
+* Ensure that the annotation file you provide to LoDEI covers a large set of genomic locations to ensure that LoDEI gets enough data to calculate q values.
+
+### Should I use --rm_snps?
+
+Short answer: if you are unsure, yes. 
+Long answer: If you compare datasets from the same cell line you typically don't need that option. If the sets that you compare against each other contain sequencing data from different cells/samples/patients/etc. you should use this option. 
 
 
