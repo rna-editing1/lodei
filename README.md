@@ -275,9 +275,9 @@ Detailed explanation of parameters and arguments:
 * `localhost/lodei_0.0.1:latest lodei find`
     * `localhost/lodei_0.0.1:latest` is the name of the image from which a new container shall be started followed by the command line call to start `lodei find`.
 * `--group1 ...` 
-    * provide the list of sorted BAM files (separated by space) of samples belonging to group 1.
+    * provide the list of sorted BAM files (separated by space) of samples belonging to group 1. Note, for each input`.bam` file a corresponding `.bai` file is required to be present in the same directory.
 * `--group2 ...`
-    * provide the list of sorted BAM files (separated by space) of samples belonging to group 2.
+    * provide the list of sorted BAM files (separated by space) of samples belonging to group 2. Note, for each input`.bam` file a corresponding `.bai` file is required to be present in the same directory.
 * `-f /annotation/genome.fa`
     * provide the reference genome used to generate the provided BAM files.
 * `/annotation/test_anno.gff3`
