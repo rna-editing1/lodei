@@ -133,9 +133,9 @@ lodei find \
 Detailed explanation of parameters and arguments:
 
 * `--group1 ...` 
-  * provide the list of sorted BAM files (separated by space) of samples belonging to group 1.
+  * provide the list of sorted BAM files (separated by space) of samples belonging to group 1. Note, for each input`.bam` file a corresponding `.bai` file is required to be present in the same directory. 
 * `--group2 ...`
-  * provide the list of sorted BAM files (separated by space) of samples belonging to group 2.
+  * provide the list of sorted BAM files (separated by space) of samples belonging to group 2. Note, for each input`.bam` file a corresponding `.bai` file is required to be present in the same directory.
 * `-f annotation/genome.fa`
   * provide the reference genome used to generate the provided BAM files.
 * `annotation/test_anno.gff3`
