@@ -1,5 +1,5 @@
 # lodei - local differential editing index calculation between two sets of RNA-seq samples.
-# Copyright (C) 2024 Phillipp Torkler, Tilman Heise
+# Copyright (C) 2024 Phillipp Torkler, Tilman Heise, Jessica Stelzl
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import time
 import logging
 import multiprocessing as mp
 import lodei.core.eifunctions as eif
+import lodei.core.paired as paired
 from datetime import datetime
 from subprocess import Popen, PIPE
 
@@ -32,6 +33,29 @@ def find(args):
     args["pairs"] = ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
     args["step_size"] = 2*args["window_size"]+1
     path = os.path.abspath(args["output"])
+
+    # Check if index files for BAM files exist, searching for file.bam.bai or file.bam.bai
+    missing_bams = []
+    for group in ["group1", "group2"]:
+        for bam in args[group]:
+            bai = bam + ".bai"
+            bai_old = os.path.splitext(bam)[0] + ".bai"
+            if not os.path.exists(bai) and not os.path.exists(bai_old):
+                missing_bams.append(bam)
+
+    if missing_bams:
+        print(f"Indexfiles are missing. Creating index files...")
+        bam_str = " ".join(missing_bams)
+        os.system(f"samtools index -M {bam_str}")
+
+    # Check if paired-end files are provided
+    if paired.is_paired_end(args["library"]):
+        paired.process_paired_end(args)
+        calculate_and_filter_qvalues(args, f"{path}/windows", path)
+        sys.exit(0)
+        return
+
+    # Single-end processing
     if args["self"] is False:
         # check if output directory exists and generate if not
         if os.path.exists(path) is False:
@@ -62,40 +86,9 @@ def find(args):
     else:
         raise Exception(f"Command line argument -c/--cores {args['cores']} provides an unvalid number of cores.")
     os.system(f"mv {path}/lei_windows* {path}/windows")
-    logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Data collecition completed.")
+    logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Data collection completed.")
     if args["self"] is False:
-        logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Loading window data.")
-        signals = eif.load_signals(f"{path}/windows")
-        os.system(f"rm {path}/windows/*")  # remove old tables
-        logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Loading window data completed.")
-
-        ###############################################
-        # averaged q-value version:
-        logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: q-value calculation and window filtering.")
-        values_signal = np.arange(0, 50, .1)
-        qvalues = {}
-        for p in args["pairs"]:
-            logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Calculating q-values for {p}")
-            qvalues[p], qd = eif.get_qvalues(signals, values_signal, index_signal=p, correct=False)
-            # calculate q-values for windows and save data
-            eif.add_qvalue_to_df(signals[p], qd)
-            signals[p].to_csv(f"{path}/windows/windows_{p}.txt", header=True, index=False, sep="\t")
-
-        for p in args["pairs"]:
-            cutoff_neg, cutoff_pos = eif.find_signal_cutoff_from_qvalue(qvalues[p], qcutoff=.1)
-            counts_neg = 0
-            counts_pos = 0
-
-            counts_neg = np.sum(signals[p]["wEI"] <= cutoff_neg)
-            counts_pos = np.sum(signals[p]["wEI"] >= cutoff_pos)
-            tmp = signals[p].loc[(signals[p]["wEI"] <= cutoff_neg) | (signals[p]["wEI"] >= cutoff_pos), :]
-            # print(f'{p}: {cutoff_neg}, {cutoff_pos} | #neg: {counts_neg}, #pos: {counts_pos}, #total: {tmp.shape[0]}')
-            logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: cutoffs {p}: {cutoff_neg}, {cutoff_pos} | #neg: {counts_neg}, #pos: {counts_pos}, #total: {tmp.shape[0]}")
-            if tmp.shape[0] >= 1:
-                tmp.to_csv(f"{path}/windows_qfiltered_{p}.txt", header=True, index=False, sep="\t")
-            else:
-                logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: No windows passed the q-value filter for {p}.")
-        logging.info(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: q-value calculation and window filtering completed")
+        calculate_and_filter_qvalues(args, f"{path}/windows", path)
 
     os.system(f"rm -rf {path}/tmp")  # delete temporary files
     tstop = time.time()
@@ -103,6 +96,67 @@ def find(args):
     time_stop_str1 = time_stop.strftime("%Y-%m-%d %H:%M:%S")
     logging.info("\n")
     logging.info(f"All done: {time_stop_str1}. Total time in hours: {np.round((tstop-tstart)/3600, 4)}\n")
+
+def calculate_and_filter_qvalues(args, windows_dir, path):
+
+    base_dir = path
+
+    logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: Loading window data.")
+    signals = eif.load_signals(windows_dir)
+    os.system(f"rm {windows_dir}/*")
+    logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: Loading window data completed.")
+
+        ###############################################
+        # averaged q-value version:
+    logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: q-value calculation and window filtering.")
+    values_signal = np.arange(0, 50, 0.1)
+    qvalues = {}
+
+    for p in args["pairs"]:
+        logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: Calculating q-values for {p}")
+        # qvalues[p], qd = eif.get_qvalues(signals, values_signal, index_signal=p, correct=False)
+        # eif.add_qvalue_to_df(signals[p], qd)
+        qval_df = {}
+        qval_dict = {}
+        qvdict, qvdf = eif.make_q_value_dict(signals, index_signal=p)
+        qval_dict[p] = qvdict
+        qval_df[p] = qvdf
+        eif.qvalue2df(signals[p], qvdict)
+        signals[p].to_csv(
+            f"{windows_dir}/windows_{p}.txt",
+            header=True, index=False, sep="\t"
+        )
+
+    for p in args["pairs"]:
+        # cutoff_neg, cutoff_pos = eif.find_signal_cutoff_from_qvalue(qvalues[p], qcutoff=0.1)
+        df = signals[p]
+        mask = df["q_value"] <= 0.1
+        #mask = (df["wEI"] <= cutoff_neg) | (df["wEI"] >= cutoff_pos)
+        filtered = df.loc[mask, :]
+
+        #counts_neg = np.sum(df["wEI"] <= cutoff_neg)
+        #counts_pos = np.sum(df["wEI"] >= cutoff_pos)
+
+        counts_neg = np.sum(filtered["wEI"] < 0)
+        counts_pos = np.sum(filtered["wEI"] > 0)
+
+        logging.info(
+            f"{datetime.now():%Y-%m-%d %H:%M:%S}: cutoffs {p}: "
+            f"| #neg: {counts_neg}, "
+            f"#pos: {counts_pos}, #total: {filtered.shape[0]}"
+        )
+
+        if not filtered.empty:
+            out_path = f"{base_dir}/windows_qfiltered_{p}.txt"
+            filtered.to_csv(out_path, header=True, index=False, sep="\t")
+            logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: Written filtered to {out_path}")
+        else:
+            logging.info(
+                f"{datetime.now():%Y-%m-%d %H:%M:%S}: "
+                f"No windows passed the q-value filter for {p}."
+            )
+
+    logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: q-value calculation and window filtering completed")
 
 
 def run(args):
@@ -270,6 +324,12 @@ def run_mp(args):
     # copy log files into output directory:
     os.makedirs(path + "/logs")
     os.system("mv " + path + "/tmp/*.log " + path + "/logs")
+
+    # Check: Are there as many log files as expected?
+    logfiles = os.listdir(path + "/logs")
+    if len(logfiles) != args["cores"]:
+        logging.error(f"Expected {args['cores']} log files, but found {len(logfiles)} in {path}/logs.")
+        sys.exit(1)
 
 
 def print_info(args):
