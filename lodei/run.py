@@ -233,6 +233,14 @@ def main():
     )
     parser_plot_metagene.set_defaults(func=plotmetagene.make_plot)
 
+    # --- version ---------
+    parser_version = subparsers.add_parser(
+        name="version",
+        help="Show program version.",
+        description="Prints the current version of lodei."
+    )
+    parser_version.set_defaults(func=print_version)
+
     # --- testrun ---------
     parser_testrun = subparsers.add_parser(
         name="testrun",
@@ -312,6 +320,8 @@ def testrun(args):
     print("lodei testrun: 'lodei plotregion' finished")
     print("lodei testrun: finished")
 
+def print_version(args):
+    print(f"lodei version 1.1.0")
 
 if __name__ == "__main__":
     main()
