@@ -213,8 +213,12 @@ def process_single_end(args, files_r1_group1, files_r1_group2, files_r2_group1, 
             "-o", output_dir,
             "-c", str(args["cores"]),
             "--library", library_type,
-            "--min_coverage", str(args["min_coverage"])
+            "--min_coverage", str(args["min_coverage"]),
+            "--window_size", str(args["window_size"])
         ]
+
+        if args["rm_snps"]:
+            cmd.append("--rm_snps")
 
         # Log the command
         logger.info(f"Running command: {' '.join(cmd)}")

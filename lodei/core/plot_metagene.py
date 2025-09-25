@@ -72,21 +72,21 @@ def compute_relative_positions(merged):
                                                  merged["mid"] - merged["start"]) / merged["length"]).clip(0, 1)
     return rel
 
-def plot_metagene_hist(rel_list, labels, bins, output, title="", mean_signal=False, wEI_list=None, ylim=None):
+def plot_metagene_hist(rel_list, labels, bins, output, title="", summed_signal=False, wEI_list=None, ylim=None):
     fig, ax = plt.subplots(figsize=(8, 4.5))
     for idx, (rel, label) in enumerate(zip(rel_list, labels)):
         bin_values = [0] * (len(bins) - 1)
         bin_counts = [0] * (len(bins) - 1)
-        # If mean_signal: wEI_list must correspond to rel!
-        wEI = wEI_list[idx] if mean_signal else None
+        # If summed_signal: wEI_list must correspond to rel!
+        wEI = wEI_list[idx] if summed_signal else None
         for j, v in enumerate(rel):
             for i in range(len(bins) - 1):
                 if (v >= bins[i] and v < bins[i + 1]) or (i == len(bins) - 2 and v == bins[i + 1]):
                     bin_counts[i] += 1
-                    if mean_signal and wEI is not None:
+                    if summed_signal and wEI is not None:
                         bin_values[i] += wEI[j]
                     break
-        if mean_signal and wEI is not None:
+        if summed_signal and wEI is not None:
             # Calculate sum of wEI per bin
             y = bin_values + [bin_values[-1]]
             ax.step(bins, y, where='post', label=label, linewidth=lwd)
@@ -94,7 +94,7 @@ def plot_metagene_hist(rel_list, labels, bins, output, title="", mean_signal=Fal
             y = bin_counts + [bin_counts[-1]]
             ax.step(bins, y, where='post', label=label, linewidth=lwd)
     ax.set_xlabel("Relative gene position (5' → 3')")
-    ax.set_ylabel("Summed wEI signal" if mean_signal else "Number of significant windows")
+    ax.set_ylabel("Summed wEI signal" if summed_signal else "Number of significant windows")
     ax.set_title(title)
     ax.legend(loc="best")
     ax.grid()
@@ -108,7 +108,7 @@ def make_plot(args):
     txt_files = args["windows"]
     bins = int(args.get("num_bins"))
     ylim = args.get("ylim", None)
-    mean_signal = args.get("mean_signal", False)
+    summed_signal = args.get("wEI_signal", False)
     output = args["output"]
 
     gff_df = pd.read_csv(
@@ -133,8 +133,8 @@ def make_plot(args):
         rel = compute_relative_positions(merged)
         rel_list.append(rel)
         labels.append(os.path.basename(txt_file))
-        if mean_signal:
+        if summed_signal:
             # wEI must have the same order as rel!
             wEI_list.append(merged["wEI"].values)
     bin_edges = np.linspace(0, 1, bins + 1)
-    plot_metagene_hist(rel_list, labels, bin_edges, output, mean_signal=mean_signal, wEI_list=wEI_list if mean_signal else None, ylim=ylim)
+    plot_metagene_hist(rel_list, labels, bin_edges, output, summed_signal=summed_signal, wEI_list=wEI_list if summed_signal else None, ylim=ylim)
