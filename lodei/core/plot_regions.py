@@ -1,5 +1,5 @@
 # lodei - local differential editing index calculation between two sets of RNA-seq samples.
-# Copyright (C) 2024 Phillipp Torkler, Tilman Heise
+# Copyright (C) 2024 Phillipp Torkler, Tilman Heise, Jessica Stelzl
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

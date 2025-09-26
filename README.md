@@ -22,7 +22,7 @@ If you use LoDEI, please cite https://doi.org/10.1038/s41467-024-53298-y
 ### System Requirements
 
 * Linux operating system (our systems run on Ubuntu 22.04)
-* Podman/Docker *or* conda/mamba
+* conda/mamba *or* Podman/Docker
 
 ### Installation
 
@@ -32,7 +32,7 @@ Install LoDEI by using one of the following ways:
 
 1. use the [conda/mamba](#installation-and-usage-via-conda) package manager to install LoDEI.
 2. use the provided [Podman/Docker](#installation-and-usage-via-podman) image.
-3. build a Podman/Docker image locally by using the provided Containerfile.
+3. [build](#build-the-image-via-the-containerfile) a Podman/Docker image locally by using the provided Containerfile.
 
 
 ## Publication
@@ -145,7 +145,13 @@ Detailed explanation of parameters and arguments:
 * `-c 3`
   * Number of used CPU cores.
 * `--library SR`
-  * provide the strandedness of your BAM files. SR = reverse stranded, SF = forward stranded, U = unstranded. Note, currently LoDEI only handles stranded single-end or unstranded RNA-seq data. To run stranded paired-end samples you need to generate BAM files for `_1` and `_2` reads seperately and run LoDEI for the resulting BAM files individually and merge the final results.
+  * provide the strandedness of your BAM files. Strandedness is defined as in `salmon` see: https://salmon.readthedocs.io/en/latest/library_type.html  
+    Currently, the following types are supported:  
+    SR = reverse stranded,  
+    SF = forward stranded,  
+    U = unstranded  
+    ISR = paired-end, reverse stranded  
+    ISF = paired-end, forward stranded
 * `--min_coverage 5`
   * only consider single positions that have a coverage >= min_coverage in all samples.
 * [Should I use](#should-i-use---rm_snps) `--rm_snps`?
@@ -156,6 +162,13 @@ Wait until LoDEI finishes the calculation (~1-2min) and have a look at the [outp
 
 Common Linux distributions are typically shipped with Podman. Podman is a tool to create, run and maintain containers.
 For a detailed introduction of Podman we refer the reader to the primary documentation at https://podman.io.
+
+### Installation
+
+You can either pull the container image from DockerHub or
+you build the image locally by using the provided Containerfile.
+
+#### Get the image via DockerHub
 
 Get the container image from DockerHub (https://hub.docker.com/r/lodei/lodei) via 
 
@@ -171,59 +184,38 @@ REPOSITORY                     TAG         IMAGE ID      CREATED         SIZE
 docker.io/lodei/lodei          latest      ea6601c991f9  42 minutes ago  2.3 GB
 ```
 
+#### Build the image via the Containerfile
+
+If you didn't pull the image from DockerHub you can build the image locally:
+
+```
+cd ~  # enter your home directory 
+git clone https://github.com/rna-editing1/lodei.git # get the repository
+cd lodei
+podman build -f Containerfile -t lodei
+```
+
+### Usage via Podman
+
 Verify that podman is able to start LoDEI by trying to run the new container:
 
 ```
+# if you've got the image from DockerHub:
 podman run --rm docker.io/lodei/lodei:latest lodei find -h
+
+# if you've build your image locally:
+podman run -it --rm --name lodeitest localhost/lodei lodei find -h
 ```
 
-You should see the help page of LoDEI:
+If your container runs successfully, 
+you should see the help page of LoDEI.
 
-```
-usage: lodei find [-h] -a GROUP1 [GROUP1 ...] -b GROUP2 [GROUP2 ...] -f FASTA -g GFF -o OUTPUT [-c CORES] [-i ID] [-w WINDOW_SIZE] [-s STEP_SIZE] [-l LIBRARY] [-m MIN_COVERAGE] [-p] [--self] [--subprocessid SUBPROCESSID] [-v]
-
-'lodei find' detects differentially edited regions between two groups of samples for a given set of genomic locations.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -a GROUP1 [GROUP1 ...], --group1 GROUP1 [GROUP1 ...]
-                        Input BAM files for group 1 separated by white space.
-  -b GROUP2 [GROUP2 ...], --group2 GROUP2 [GROUP2 ...]
-                        Input BAM files for group 2 separated by white space.
-  -f FASTA, --fasta FASTA
-                        Fasta file. Must be the same fasta file used for producing BAM 
-                        files of group1 and group2.
-  -g GFF, --gff GFF     Annotation in GFF file format. The program tries to find local editing
-                        regions within the given GFF annotations.
-  -o OUTPUT, --output OUTPUT
-                        Output directory
-  -c CORES, --cores CORES
-                        Number of cores used. [Default: 1]
-  -i ID, --id ID        Optional run ID. [Default: 1]
-  -w WINDOW_SIZE, --window_size WINDOW_SIZE
-                        Half-window size for editing index calculation. The complete 
-                        window size is: 2*w+1 [Default: 50]
-  -s STEP_SIZE, --step_size STEP_SIZE
-                        The editing index windows will be shifted by -s positions. [Default: 15]
-  -l LIBRARY, --library LIBRARY
-                        Specifies the sequencing library type. [Default: SR]
-  -m MIN_COVERAGE, --min_coverage MIN_COVERAGE
-                        Minimum required read coverage at regions. Only positions 
-                        with a coverage >= m in all samples of all groups are 
-                        used for editing index calculation. [Default: 5]
-  -p, --rm_snps         Simple heuristic to remove possible SNPs [Default: off]
-  --self                Only used if the the program calls itself 
-                        for multi processing reasons. [Default: False]
-  --subprocessid SUBPROCESSID
-                        For creating a separate log file when using -c > 1. [Default: 0]
-  -v, --verbose         Verbose mode. [Default: off]
-```
 
 ### Run LoDEI Using Podman
 
 To verify a proper installation we run LoDEI on the provided [test dataset](#test-data).
 
-### Mount a volume/directory into the container
+#### Mount a volume/directory into the container
 
 The LoDEI container needs access to the provided files (annotations and bam files) as well as a directory where it can save results to.
 The `-v` option is needed to make directories of your host file system available in the container.
@@ -287,7 +279,13 @@ Detailed explanation of parameters and arguments:
 * `-c 3`
     * Number of used CPU cores.
 * `--library SR`
-    * provide the strandedness of your BAM files. SR = reverse stranded, SF = forward stranded, U = unstranded. Note, currently LoDEI only handles stranded single-end or unstranded RNA-seq data. To run stranded paired-end samples you need to generate BAM files for `_1` and `_2` reads seperately and run LoDEI for the resulting BAM files individually and merge the final results.
+    * provide the strandedness of your BAM files. Strandedness is defined as in `salmon` see: https://salmon.readthedocs.io/en/latest/library_type.html  
+    Currently, the following types are supported:  
+    SR = reverse stranded,  
+    SF = forward stranded,  
+    U = unstranded  
+    ISR = paired-end, reverse stranded  
+    ISF = paired-end, forward stranded
 * `--min_coverage 5`
     * only consider single positions that have a coverage >= min_coverage in all samples.
 * [Should I use](#should-i-use---rm_snps) `--rm_snps`?
@@ -335,7 +333,6 @@ windows
 
 If windows achieve a q value < 0.1, LoDEI creates additional output files for each mismatch pair for windows with a q value < 0.1 according to the naming scheme `windows_qfiltered_XY.txt`, where X and Y are the nucleotide mismatches.
 
-The output for the provided test dataset is available at Zenodo: https://zenodo.org/doi/10.5281/zenodo.10907019
 
 ## FAQ
 
