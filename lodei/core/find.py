@@ -22,6 +22,7 @@ import time
 import logging
 import multiprocessing as mp
 import lodei.core.eifunctions as eif
+import lodei.core.functions as gf
 import lodei.core.paired as paired
 from datetime import datetime
 from subprocess import Popen, PIPE
@@ -29,10 +30,20 @@ from subprocess import Popen, PIPE
 
 def find(args):
     if args["window_size"] < 10 or args["window_size"] > 50:
-        raise Exception(f"Command line argument -w/--window_size needs to be an integer in between 10 and 50.")
+        raise Exception("Command line argument -w/--window_size needs to be an integer in between 10 and 50.")
     args["pairs"] = ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
-    args["step_size"] = 2*args["window_size"]+1
+    args["step_size"] = 2 * args["window_size"] + 1
     path = os.path.abspath(args["output"])
+    
+    # Validate BAM files
+    for group in ["group1", "group2"]:
+        for bam in args[group]:
+            if not gf.is_bam_file(bam):
+                raise Exception(f"The file {bam} in {group} is not a valid BAM file.")
+
+    # Validate library type
+    if not gf.is_supported_librarytype(args["library"]):
+        raise Exception(f"The library type {args['library']} is not supported. Supported types are: U, SF, SR, ISR, ISF.")
 
     # Check if index files for BAM files exist, searching for file.bam.bai or file.bam.bai
     missing_bams = []
@@ -44,7 +55,7 @@ def find(args):
                 missing_bams.append(bam)
 
     if missing_bams:
-        print(f"Indexfiles are missing. Creating index files...")
+        print("Indexfiles are missing. Creating index files...")
         bam_str = " ".join(missing_bams)
         os.system(f"samtools index -M {bam_str}")
 
@@ -95,7 +106,8 @@ def find(args):
     time_stop = datetime.now()
     time_stop_str1 = time_stop.strftime("%Y-%m-%d %H:%M:%S")
     logging.info("\n")
-    logging.info(f"All done: {time_stop_str1}. Total time in hours: {np.round((tstop-tstart)/3600, 4)}\n")
+    logging.info(f"All done: {time_stop_str1}. Total time in hours: {np.round((tstop - tstart) / 3600, 4)}\n")
+
 
 def calculate_and_filter_qvalues(args, windows_dir, path):
 
@@ -106,11 +118,11 @@ def calculate_and_filter_qvalues(args, windows_dir, path):
     os.system(f"rm {windows_dir}/*")
     logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: Loading window data completed.")
 
-        ###############################################
-        # averaged q-value version:
+    ###############################################
+    # averaged q-value version:
     logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: q-value calculation and window filtering.")
-    values_signal = np.arange(0, 50, 0.1)
-    qvalues = {}
+    # values_signal = np.arange(0, 50, 0.1)
+    # qvalues = {}
 
     for p in args["pairs"]:
         logging.info(f"{datetime.now():%Y-%m-%d %H:%M:%S}: Calculating q-values for {p}")
@@ -131,11 +143,11 @@ def calculate_and_filter_qvalues(args, windows_dir, path):
         # cutoff_neg, cutoff_pos = eif.find_signal_cutoff_from_qvalue(qvalues[p], qcutoff=0.1)
         df = signals[p]
         mask = df["q_value"] <= 0.1
-        #mask = (df["wEI"] <= cutoff_neg) | (df["wEI"] >= cutoff_pos)
+        # mask = (df["wEI"] <= cutoff_neg) | (df["wEI"] >= cutoff_pos)
         filtered = df.loc[mask, :]
 
-        #counts_neg = np.sum(df["wEI"] <= cutoff_neg)
-        #counts_pos = np.sum(df["wEI"] >= cutoff_pos)
+        # counts_neg = np.sum(df["wEI"] <= cutoff_neg)
+        # counts_pos = np.sum(df["wEI"] >= cutoff_pos)
 
         counts_neg = np.sum(filtered["wEI"] < 0)
         counts_pos = np.sum(filtered["wEI"] > 0)

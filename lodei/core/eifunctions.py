@@ -19,7 +19,6 @@ import numpy as np
 import logging
 import os
 from datetime import datetime
-import math
 
 
 def get_nucleotides(ref, edit, strand, library="SR"):
@@ -108,9 +107,9 @@ def get_data(regions_g0, regions_g1, ref, start, end, strand, nuc_ref, nuc_edit,
     # print per position.... for debugging:
     if debug:
         for i in range(mat_cov_0.shape[1]):
-            line = f"{start+i:>15} {ref[i]} "
+            line = f"{start + i:>15} {ref[i]} "
             for j in range(mat_cov_0.shape[0]):
-                line += f" {mat_mut_0[j,i]}/{mat_cov_0[j,i]}\t"
+                line += f" {mat_mut_0[j, i]}/{mat_cov_0[j, i]}\t"
             print(f"{line}")
     
     # print(ref)
@@ -178,13 +177,13 @@ def get_EI(ref, c0, c1, m0, m1, nuc, mincoverage, debugstart=-1, rm_snp=False):
     if debugstart >= 0:
         mpos = np.where(sel)
         for i in range(c0.shape[1]):
-            line = f"{i:>4} {mpos[0][i]+debugstart:>10} {ref[i]} -> "
+            line = f"{i:>4} {mpos[0][i] + debugstart:>10} {ref[i]} -> "
             # line = f"{i:>4} "
             for j in range(c0.shape[0]):
-                line += f"{m0[j,i]}/{c0[j,i]}\t"
+                line += f"{m0[j, i]}/{c0[j, i]}\t"
             line += " || "
             for j in range(c1.shape[0]):
-                line += f"{m1[j,i]}/{c1[j,i]}\t"
+                line += f"{m1[j, i]}/{c1[j, i]}\t"
             print(line)
     
     # print(c0)
@@ -317,7 +316,7 @@ def calc_local_EI(data, hwidth=75, step_size=25, mincoverage=5, rm_snp=False):
 def report_localei(df, chrom, start, name, strand, hwsize, stream):
     for i, row in df.iterrows():
         if not np.isnan(row["av_diff"]):
-            line = f"{chrom}\t{start+df['wstart'][i]}\t{start+df['wend'][i]}\t"
+            line = f"{chrom}\t{start + df['wstart'][i]}\t{start + df['wend'][i]}\t"
             line += f"{name}\t{df['av_diff'][i]:.1f}\t{strand}\n"
             # line += f"{name}\t{df['av_diff'][i]:.1f}\t{strand}\t{df['cn'][i]}\t{df['csn'][i]}\t{df['csn_float'][i]}"  # \n"
             # line += f"\t{df['av_g0'][i]:.1f}\t{df['av_g1'][i]:.1f}\n"
@@ -371,140 +370,15 @@ def merge_windows(windows):
                          "stop": stop, "name": name, "mEI": mEI, "strand": strand})
 
 
-## returns the qvalues (neg and pos) for a given signal value
-#def qvalue_for_signal_cutoff(signal, null, scutoff=1, correct=False):
-#    s_pos = signal.loc[signal["wEI"] > 0, "wEI"]
-#    s_neg = signal.loc[signal["wEI"] < 0, "wEI"]
-#    
-#    w_neg = 1
-#    w_pos = 1
-#    
-#    if correct:
-#        w_neg = np.sum(null["wEI"] < 0) / np.sum(s_neg < 0)
-#        w_pos = np.sum(null["wEI"] > 0) / np.sum(s_pos > 0)
-#    
-#    a = int(np.sum(s_pos >= scutoff) * w_pos)
-#    b = np.sum(null["wEI"] >= scutoff)  # FP
-#    # print(f"pos: {b}/{a}")
-#    if a <= 0:
-#        if b > 0:
-#            q_pos = 1
-#        else:
-#            q_pos = None
-#    elif a <= 20:
-#        q_pos = None
-#    else:
-#        q_pos = b / a
-#    
-#    a = int(np.sum(s_neg <= -scutoff) * w_neg)
-#    b = np.sum(null["wEI"] <= -scutoff)
-#    # print(f"neg: {b}/{a}")
-#    if a <= 0:
-#        if b > 0:
-#            q_neg = 1
-#        else:
-#            q_neg = None
-#    elif a <= 20:
-#        q_neg = None
-#    else:
-#        q_neg = b / a
-#    
-#    if q_pos != None:
-#        q_pos = np.min([1, q_pos])
-#    
-#    if q_neg != None:
-#        q_neg = np.min([1, q_neg])
-#    return q_neg, q_pos
-
-
-## calculates the average q-value for a given mutation pair
-## the average is computed based on the q-values for all other mutation pairs
-## the function returns the average q-values for a list of signal values
-#def get_qvalues(signals, values, index_signal="AG", correct=True):
-#    values = np.round(values, 1)
-#    q_pos = [1]*len(values)
-#    q_neg = [1]*len(values)
-#    pairs = ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
-#    if index_signal != "AG":
-#        pairs = ["AC", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
-#    bneg = 1.0
-#    bpos = 1.0
-#    qvdict = {}
-#    for i, v in enumerate(values):
-#        # print(f"{i}, {v}")
-#        tmp_pos = []
-#        tmp_neg = []
-#        for index_null in pairs:
-#            if index_signal != index_null:
-#                qn, qp = qvalue_for_signal_cutoff(signals[index_signal], signals[index_null], scutoff=v, correct=correct)
-#                if qn == None:
-#                    tmp_neg.append(q_neg[-1])
-#                else:
-#                    tmp_neg.append(qn)
-#            
-#                if qp == None:
-#                    tmp_pos.append(q_pos[-1])
-#                else:
-#                    tmp_pos.append(qp)
-#        # print(tmp_neg)
-#        # print(tmp_pos)
-#        tmp = np.round(np.median(tmp_neg), 3)
-#        if tmp < bneg:
-#            bneg = tmp
-#
-#        tmp = np.round(np.median(tmp_pos), 3)
-#        if tmp < bpos:
-#            bpos = tmp
-#        
-#        q_neg[i] = bneg
-#        q_pos[i] = bpos
-#        qvdict[str(v)] = {"q_neg": bneg, "q_pos": bpos}
-#        # print("")
-#    qvdict["max"] = {"value": np.round(np.max(values), 1), "q_neg": bneg, "q_pos": bpos}
-#    return pd.DataFrame({"values": values, "q_neg": q_neg, "q_pos": q_pos}), qvdict
-
-
-## takes the output of get_qvalues and
-## finds the signal cutoff for a given q-value
-#def find_signal_cutoff_from_qvalue(qvdf, qcutoff=.1):
-#    cut_neg = -math.inf
-#    cut_pos = math.inf
-#    for i, row in qvdf.iterrows():
-#        if row["q_neg"] <= qcutoff:
-#            cut_neg = -row["values"]
-#            break
-#    for i, row in qvdf.iterrows():
-#        if row["q_pos"] <= qcutoff:
-#            cut_pos = row["values"]
-#            break
-#    return cut_neg, cut_pos
-
-
-#def add_qvalue_to_df(df, qvd):
-#    tmp = np.ones(df.shape[0])
-#    for i in range(df.shape[0]):
-#        # print(f"{i}: {df.iloc[i,0]} | {df.iloc[i, 1]} | {df.iloc[i, 2]} | {df.iloc[i,3]} | {df.iloc[i,4]} | {df.iloc[i,5]} | ")
-#        if df.iloc[i, 4] < 0:
-#            if np.abs(df.iloc[i, 4]) > qvd["max"]["value"]:
-#                tmp[i] = qvd["max"]["q_neg"]
-#            else:
-#                tmp[i] = qvd[str(np.abs(df.iloc[i, 4]))]["q_neg"]
-#        elif df.iloc[i, 4] > 0:
-#            if df.iloc[i, 4] > qvd["max"]["value"]:
-#                tmp[i] = qvd["max"]["q_pos"]
-#            else:
-#                tmp[i] = qvd[str(df.iloc[i, 4])]["q_pos"]
-#    df["q_value"] = tmp
-
 def make_q_value_dict(signals, index_signal="AG"):
     # we start with the first x entries to get the first q-value
     # the q-value cannot decrease, but only increase from there on.
     s = np.array(signals[index_signal]["wEI"].copy())
     s.sort()
     th_neg = s[19]
-    th_pos = s[len(s)-19]
-    #print(f"th_neg: {th_neg}")
-    #print(f"th_pos: {th_pos}")
+    th_pos = s[len(s) - 19]
+    # print(f"th_neg: {th_neg}")
+    # print(f"th_pos: {th_pos}")
     
     pairs = ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
     FPs_neg = []
@@ -519,11 +393,11 @@ def make_q_value_dict(signals, index_signal="AG"):
     fp_neg = np.median(FPs_neg)
     fp_pos = np.median(FPs_pos)
     
-    q_value_current_neg = min([1, round(fp_neg/tp_fp_neg, 4)])
-    q_value_current_pos = min([1, round(fp_pos/tp_fp_pos, 4)])
+    q_value_current_neg = min([1, round(fp_neg / tp_fp_neg, 4)])
+    q_value_current_pos = min([1, round(fp_pos / tp_fp_pos, 4)])
 
-    #print(f"neg: FP: {fp_neg:>10} | TP+FP: {tp_fp_neg} | q: {q_value_current_neg}")
-    #print(f"pos: FP: {fp_pos:>10} | TP+FP: {tp_fp_pos} | q: {q_value_current_pos}")
+    # print(f"neg: FP: {fp_neg:>10} | TP+FP: {tp_fp_neg} | q: {q_value_current_neg}")
+    # print(f"pos: FP: {fp_pos:>10} | TP+FP: {tp_fp_pos} | q: {q_value_current_pos}")
 
     # now we have the starting q-values and can move from left to right (for negative values)
     # or from right to left (for positive values) to calculate all q-values
@@ -539,7 +413,7 @@ def make_q_value_dict(signals, index_signal="AG"):
             else:
                 tp_fp_neg = np.sum(signals[p]["wEI"] <= value)
         fp_neg = np.median(FPs_neg)
-        qvalue = round(fp_neg/tp_fp_neg, 4)
+        qvalue = round(fp_neg / tp_fp_neg, 4)
         if qvalue > q_value_current_neg:
             if qvalue > 1:
                 qvalue = 1
@@ -557,7 +431,7 @@ def make_q_value_dict(signals, index_signal="AG"):
             else:
                 tp_fp_neg = np.sum(signals[p]["wEI"] >= value)
         fp_pos = np.median(FPs_pos)
-        qvalue = round(fp_pos/tp_fp_neg, 4)
+        qvalue = round(fp_pos / tp_fp_neg, 4)
         if qvalue > q_value_current_pos:
             if qvalue > 1:
                 qvalue = 1
@@ -566,6 +440,7 @@ def make_q_value_dict(signals, index_signal="AG"):
         all_values.append(value)
         all_qvalues.append(q_value_current_pos)
     return qvdict, pd.DataFrame({"values": all_values, "q_values": all_qvalues})
+
 
 def qvalue2df(df, qvdict):
     values = [float(x) for x in list(qvdict.keys())]
@@ -576,7 +451,7 @@ def qvalue2df(df, qvdict):
     q_value_pos_max_value = qvdict[str(max_value)]
     # print(f"{q_value_neg_min_value}, {q_value_pos_max_value}")
 
-    qvalues = [1]*len(df)
+    qvalues = [1] * len(df)
     for i in range(len(df)):
         wei = df.iloc[i, 4]
         if wei != 0:
@@ -585,5 +460,5 @@ def qvalue2df(df, qvdict):
             elif wei < min_value:
                 qvalues[i] = q_value_neg_min_value
             else:
-                qvalues[i] = qvdict[str(round(wei,1))]
+                qvalues[i] = qvdict[str(round(wei, 1))]
     df["q_value"] = qvalues

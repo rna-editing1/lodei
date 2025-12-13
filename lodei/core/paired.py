@@ -17,12 +17,12 @@ import glob
 import os
 import logging
 from subprocess import run
-import sys
 import shutil
 import pandas as pd
 
 logger = logging.getLogger("paired_end")
 logger.setLevel(logging.INFO)
+
 
 def is_paired_end(library_value):
     """
@@ -31,6 +31,7 @@ def is_paired_end(library_value):
     """
     paired_values = ['ISR', 'ISF']
     return library_value.upper() in paired_values
+
 
 def setup_paired_logger(output_dir, log_filename="paired_processing.log"):
     '''
@@ -68,6 +69,7 @@ def setup_paired_logger(output_dir, log_filename="paired_processing.log"):
 
     return logger
 
+
 def create_temp_folder(output_dir):
     """
     Creates a temporary folder within the given output directory and,
@@ -90,12 +92,13 @@ def create_temp_folder(output_dir):
         logger.info(f"{temp_dir} already exists. Removing the existing directory.")
         shutil.rmtree(temp_dir)
 
-    os.makedirs(temp_dir)    
+    os.makedirs(temp_dir)
     os.makedirs(r1_dir, exist_ok=True)
     os.makedirs(r2_dir, exist_ok=True)
     
-    logger.info(f"Temporary directories created.")
+    logger.info("Temporary directories created.")
     return r1_dir, r2_dir
+
 
 def splitting_files(bam_files, r1_dir, r2_dir):
     """
@@ -241,6 +244,7 @@ def process_single_end(args, files_r1_group1, files_r1_group2, files_r2_group1, 
 
     logger.info("Single-end processing completed.")
 
+
 def merge_results(output_dir):
     """
     Merges paired window result files from SF and SR for all nucleotide pairs.
@@ -313,6 +317,7 @@ def merge_results(output_dir):
 
     logger.info("All pairs merged and saved.")
 
+
 def clean_workspace(temp_dir):
     """
     Cleans up the temporary workspace:
@@ -346,6 +351,7 @@ def clean_workspace(temp_dir):
         shutil.rmtree(info_se_dir)
     os.rename(temp_dir, info_se_dir)
 
+
 def process_paired_end(args):
     """
     Main function for processing paired-end data.
@@ -370,7 +376,7 @@ def process_paired_end(args):
     logger.info("Paired-end processing started.")
     
     # 1. Create temporary directories.
-    r1_dir, r2_dir = create_temp_folder(args["output"]) 
+    r1_dir, r2_dir = create_temp_folder(args["output"])
 
     # 2. Split the BAM files into separate files for R1 and R2.
     bam_files_r1_group1, bam_files_r2_group1 = splitting_files(args["group1"], r1_dir, r2_dir)

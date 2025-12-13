@@ -29,11 +29,13 @@ mpl.rcParams['legend.fontsize'] = 8
 
 lwd = 2.5
 
+
 def extract_gene_name(attributes):
     for item in attributes.split(";"):
         if item.strip().startswith("gene_name="):
             return item.strip().split("=", 1)[1]
     return None
+
 
 def filter_unique_genes(gff_df):
     if "gene_name" not in gff_df.columns:
@@ -48,6 +50,7 @@ def filter_unique_genes(gff_df):
     gff_df = gff_df[~duplicated].copy()
     return gff_df
 
+
 def merge_windows_with_gff(windows_df, gff_df):
     """
     This function merges a DataFrame of significant windows (`windows_df`) with gene annotation data (`gff_df`),
@@ -61,6 +64,7 @@ def merge_windows_with_gff(windows_df, gff_df):
     )
     return merged
 
+
 def compute_relative_positions(merged):
     """
     The function determines the relative location of the midpoint of each window in the corresponding gene, taking strand orientation into account.
@@ -71,6 +75,7 @@ def compute_relative_positions(merged):
     rel = ((merged["end"] - merged["mid"]).where(merged["strand"].eq("-"),
                                                  merged["mid"] - merged["start"]) / merged["length"]).clip(0, 1)
     return rel
+
 
 def plot_metagene_hist(rel_list, labels, bins, output, title="", summed_signal=False, wEI_list=None, ylim=None):
     fig, ax = plt.subplots(figsize=(8, 4.5))
@@ -103,6 +108,7 @@ def plot_metagene_hist(rel_list, labels, bins, output, title="", summed_signal=F
     fig.savefig(output, facecolor='#FFFFFF', bbox_inches='tight', pad_inches=0.1)
     plt.close(fig)
 
+
 def make_plot(args):
     gff_path = args["gff"]
     txt_files = args["windows"]
@@ -113,7 +119,7 @@ def make_plot(args):
 
     gff_df = pd.read_csv(
         gff_path, sep='\t', comment='#', header=None,
-        names=['seqid','source','type','start','end','score','strand','phase','attributes']
+        names=['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
     )
     print(f"Loaded GFF file '{gff_path}' with {len(gff_df)} rows")
     gff_df = filter_unique_genes(gff_df)
@@ -137,4 +143,6 @@ def make_plot(args):
             # wEI must have the same order as rel!
             wEI_list.append(merged["wEI"].values)
     bin_edges = np.linspace(0, 1, bins + 1)
-    plot_metagene_hist(rel_list, labels, bin_edges, output, summed_signal=summed_signal, wEI_list=wEI_list if summed_signal else None, ylim=ylim)
+    plot_metagene_hist(rel_list, labels, bin_edges, output,
+                       summed_signal=summed_signal,
+                       wEI_list=wEI_list if summed_signal else None, ylim=ylim)

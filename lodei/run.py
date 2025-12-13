@@ -20,11 +20,12 @@ import lodei.core.find as find
 import lodei.core.plot_regions as plotregions
 import lodei.core.plot_wcounts as plotwindowcounts
 import lodei.core.plot_metagene as plotmetagene
+from lodei.core import convert
 
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="lodei", 
+        prog="lodei",
         description="""lodei is a collection of command line applications to
         calculate the local difference of nucleotide editing signals between two
         groups of samples.""",
@@ -82,7 +83,7 @@ def main():
         The complete window size is: 2*w+1 [Default: 25]""")
 
     parser_find.add_argument(
-    '-l', '--library', dest='library', type=str, default="SR", required=False,
+        '-l', '--library', dest='library', type=str, default="SR", required=False,
         help="""Specifies the strandedness and sequencing type of your BAM files.
     Allowed values:
         SR   = single-end, reverse stranded,
@@ -207,9 +208,9 @@ def main():
         )
     )
     parser_plot_metagene.add_argument(
-    "-w", "--windows", type=str, nargs="+", required=True,
-    help="Path(s) to one or more tab-separated files containing significant editing windows. "
-         "Each file will be shown as a separate line in the plot."
+        "-w", "--windows", type=str, nargs="+", required=True,
+        help="Path(s) to one or more tab-separated files containing significant editing windows. "
+        "Each file will be shown as a separate line in the plot."
     )
     parser_plot_metagene.add_argument(
         "-g", "--gff", type=str, required=True,
@@ -232,6 +233,37 @@ def main():
         help="Output filename for the plot (e.g. metagene.png)."
     )
     parser_plot_metagene.set_defaults(func=plotmetagene.make_plot)
+
+    # --- convert ---------
+    parser_convert = subparsers.add_parser(
+        name="convert",
+        description="""'lodei convert' provides file format conversion utilities
+        for converting lodei output files to standard bioinformatics formats.""",
+        help="Convert lodei output files to standard formats.")
+
+    convert_subparsers = parser_convert.add_subparsers(
+        title="Conversion subcommands",
+        description="Available file format conversions.",
+        help="",
+        metavar="")
+
+    # --- convert windows2bedgraph ---------
+    parser_windows2bedgraph = convert_subparsers.add_parser(
+        name="windows2bedgraph",
+        description="""Convert lodei windows output from lodei find to bedGraph format.
+        The output bedGraph file can be used for visualization in genome browsers
+        like IGV or UCSC Genome Browser.""",
+        help="Convert windows output to bedGraph format.")
+
+    parser_windows2bedgraph.add_argument(
+        "-i", "--input", dest="input", type=str, required=True,
+        help="Input windows file from 'lodei find' output.")
+
+    parser_windows2bedgraph.add_argument(
+        "-o", "--output", dest="output", type=str, required=True,
+        help="Output bedGraph file.")
+
+    parser_windows2bedgraph.set_defaults(func=convert.windows2bedgraph)
 
     # --- version ---------
     parser_version = subparsers.add_parser(
@@ -291,7 +323,7 @@ def testrun(args):
                    'fasta': os.path.join(args["directory"], "annotation/genome.fa"),
                    'gff': os.path.join(args["directory"], "annotation/test_anno.gff3"),
                    'output': f'{outpath}',
-                   'cores': 3, 'id': 1, 'window_size': 50, 
+                   'cores': 3, 'id': 1, 'window_size': 50,
                    'library': 'SR',
                    'min_coverage': 5, 'rm_snps': False, 'subprocessid': 0,
                    'self': False, 'verbose': True}
@@ -312,7 +344,7 @@ def testrun(args):
                    'fasta': os.path.join(args["directory"], "annotation/genome.fa"),
                    'regions': os.path.join(args["directory"], "annotation/example_plot_regions.txt"),
                    'output': os.path.join(outpath, "plotregions"),
-                   'window_size': 50, 
+                   'window_size': 50,
                    'library': 'SR',
                    'min_coverage': 5, "rm_snps": True}
     print("lodei testrun: 'lodei plotregion' start")
@@ -320,8 +352,10 @@ def testrun(args):
     print("lodei testrun: 'lodei plotregion' finished")
     print("lodei testrun: finished")
 
+
 def print_version(args):
-    print(f"lodei version 1.1.0")
+    print("lodei version 1.1.1")
+
 
 if __name__ == "__main__":
     main()

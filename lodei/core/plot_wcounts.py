@@ -18,7 +18,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import os
-from matplotlib.patches import Rectangle
 from matplotlib.lines import Line2D
 
 mpl.rcParams['font.size'] = 8
@@ -30,6 +29,7 @@ mpl.rcParams['legend.markerscale'] = 1
 mpl.rcParams['legend.fontsize'] = 8
 
 lwd = 2.5
+
 
 # finds the min and max LoEI values of all mismatch pairs of an experiment.
 # these limits are needed for gather_absolute_counts()
@@ -46,20 +46,22 @@ def find_signal_limits(signals):
             max_signal = tmp_max
     return min_signal, max_signal
 
+
 # gathers how many windows are existing for a given range of LoDEI singals.
 # So how many windows are < a th and how many are > a th.
 def gather_absolute_counts(wei_signal, limits=[]):
-    wei_values = np.round(np.arange(limits[0], limits[1]+1, .1), 1)
+    wei_values = np.round(np.arange(limits[0], limits[1] + 1, .1), 1)
     counts = []
     for x in wei_values:
         if x > 0:
-            counts.append(np.sum(wei_signal >= x)+1)
+            counts.append(np.sum(wei_signal >= x) + 1)
         elif x < 0:
-            counts.append(np.sum(wei_signal <= x)+1)
+            counts.append(np.sum(wei_signal <= x) + 1)
         else:
             counts.append(1)
     return pd.DataFrame({"n": counts,
                          "limits": wei_values})
+
 
 def plot_counts(ax, signals, title=""):
     pairs = ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
@@ -79,25 +81,26 @@ def plot_counts(ax, signals, title=""):
 
     for pairs, cmap in zip(lpairs, lcmaps):
         for i, p in enumerate(pairs):
-            c = (i+1)*3
-            line, = ax.plot(signals[p]["limits"], signals[p]["n"], 
-                    label=p, c=cmap(c/11), linewidth=2)
+            c = (i + 1) * 3
+            line, = ax.plot(signals[p]["limits"], signals[p]["n"],
+                            label=p, c=cmap(c / 11), linewidth=2)
             handles.append(line)
         handles.append(spacer)
     
-    del handles[len(handles)-1]
+    del handles[len(handles) - 1]
     ax.set_yscale("log")
     labels = [h.get_label() for h in handles]
     ax.legend(handles, labels, loc="best")
     ax.set_title(title)
     ax.set_xlabel(r"$\delta^{X \rightarrow Y}$")
-    ax.set_ylabel(r"#windows $\leq \delta^{X \rightarrow Y}$ for $\delta^{X \rightarrow Y} < 0$"+"\n"+r"#windows$\geq \delta^{X \rightarrow Y}$ for $\delta^{X \rightarrow Y} > 0$")
+    ax.set_ylabel(r"#windows $\leq \delta^{X \rightarrow Y}$ for $\delta^{X \rightarrow Y} < 0$" + "\n" + r"#windows$\geq \delta^{X \rightarrow Y}$ for $\delta^{X \rightarrow Y} > 0$")
     ax.grid()
     ylim = ax.get_ylim()
-    #print(ylim)
-    ylim = (.8,ylim[1])
-    ax.plot([0,0], ylim, c="#b0b0b0", zorder=4, linewidth=2.5)
+    # print(ylim)
+    ylim = (.8, ylim[1])
+    ax.plot([0, 0], ylim, c="#b0b0b0", zorder=4, linewidth=2.5)
     ax.set_ylim(ylim)
+
 
 def make_plot(args):
     pairs = ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
@@ -116,9 +119,7 @@ def make_plot(args):
     for p in pairs:
         pdata[p] = gather_absolute_counts(signals[p]["wEI"], limits=[min_s, max_s])
 
-
-
     fig, ax = plt.subplots()
     plot_counts(ax, pdata)
-    fig.savefig(args["output"], facecolor='#FFFFFF', bbox_inches = 'tight', pad_inches = 0.1)
+    fig.savefig(args["output"], facecolor='#FFFFFF', bbox_inches='tight', pad_inches=0.1)
 
