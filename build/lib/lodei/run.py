@@ -22,7 +22,6 @@ import lodei.core.plot_wcounts as plotwindowcounts
 import lodei.core.plot_metagene as plotmetagene
 from lodei.core import convert
 
-
 def main():
     parser = argparse.ArgumentParser(
         prog="lodei",
@@ -264,6 +263,7 @@ def main():
         help="Output bedGraph file.")
 
     parser_windows2bedgraph.set_defaults(func=convert.windows2bedgraph)
+
 
     # --- version ---------
     parser_version = subparsers.add_parser(
