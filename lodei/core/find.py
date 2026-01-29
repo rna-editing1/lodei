@@ -25,7 +25,8 @@ import lodei.core.eifunctions as eif
 import lodei.core.functions as gf
 import lodei.core.paired as paired
 from datetime import datetime
-from subprocess import Popen, PIPE
+# from subprocess import Popen, PIPE
+import subprocess
 
 
 def find(args):
@@ -63,6 +64,7 @@ def find(args):
     if paired.is_paired_end(args["library"]):
         paired.process_paired_end(args)
         calculate_and_filter_qvalues(args, f"{path}/windows", path)
+        make_qc_plots(path)
         sys.exit(0)
         return
 
@@ -90,7 +92,7 @@ def find(args):
         logging.info(f"Arguments: {args}")
         run(args)
     elif args["cores"] > 1:
-        logging.basicConfig(filename=f"{path}/find_main.log",
+        logging.basicConfig(filename=f"{path}/lodei_find.log",
                             filemode='w', level=logging.INFO)
         print_info(args)
         run_mp(args)
@@ -102,11 +104,28 @@ def find(args):
         calculate_and_filter_qvalues(args, f"{path}/windows", path)
 
     os.system(f"rm -rf {path}/tmp")  # delete temporary files
+    make_qc_plots(path)
+
     tstop = time.time()
     time_stop = datetime.now()
     time_stop_str1 = time_stop.strftime("%Y-%m-%d %H:%M:%S")
     logging.info("\n")
     logging.info(f"All done: {time_stop_str1}. Total time in hours: {np.round((tstop - tstart) / 3600, 4)}\n")
+
+
+def make_qc_plots(path):
+    # Create QC Plots
+    cmd = ["lodei", "plotwindowcounts",
+           "-d", f"{path}/windows",
+           "-o", f"{path}/fig_window_counts.pdf"
+           ]
+    subprocess.run(cmd, check=True)
+
+    cmd = ["lodei", "plotratios",
+           "-d", f"{path}/windows",
+           "-o", f"{path}/fig_editing_ratios.pdf"
+           ]
+    subprocess.run(cmd, check=True)
 
 
 def calculate_and_filter_qvalues(args, windows_dir, path):
@@ -315,7 +334,7 @@ def run_mp(args):
         cmd.append("--subprocessid")
         cmd.append(str(i))
 
-        process_list.append(Popen(cmd, stdout=PIPE, stderr=PIPE))
+        process_list.append(subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
     # wait until jobs are finished
     if len(process_list) > args["cores"]:

@@ -33,7 +33,7 @@ def is_paired_end(library_value):
     return library_value.upper() in paired_values
 
 
-def setup_paired_logger(output_dir, log_filename="paired_processing.log"):
+def setup_paired_logger(output_dir, log_filename="lodei_find.log"):
     '''
     Sets up a dedicated logger named 'paired_end' that writes log messages to a specified file.
 
@@ -43,7 +43,7 @@ def setup_paired_logger(output_dir, log_filename="paired_processing.log"):
 
     Parameters:
         output_dir (str): The directory where the log file will be created. If the directory does not exist, it will be created.
-        log_filename (str, optional): The name of the log file. Defaults to "paired_processing.log".
+        log_filename (str, optional): The name of the log file. Defaults to "lodei_find.log".
 
     Returns:
         logging.Logger: A configured logger instance named 'paired_end'.
@@ -393,6 +393,6 @@ def process_paired_end(args):
     # 5. Clean up the temporary workspace.
 
     clean_workspace(os.path.join(args["output"], "tmp_paired"))
-
+    
     logger.info("Paired-end processing completed.")
     return
