@@ -215,41 +215,96 @@ def main():
     # --- plot_metagene ---------
     parser_plot_metagene = subparsers.add_parser(
         name="plotmetagene",
-        help="Visualizes the distribution of significant editing windows along gene length.",
+        help="Visualizes the normalized differential editing signal across genomic features.",
         description=(
-            "Plots the relative position of editing events across genes for one or more input files."
-            "Each input file (tab-separated, e.g. LoDEI output) is shown as a separate line. "
-            "Gene annotation is taken from a GFF3 file. Only genes with unique (chromosome, gene_name) "
-            "combinations are considered; ambiguous entries are excluded and reported. "
-            "The gene body is divided into bins of equal size, and the number of windows per bin is plotted."
+            "Plots the relative position of editing events across features (genes) for one or more input files."
+            "Each input file is shown as a separate line. "
+            "Annotations are taken from a GFF3 file. Only features with unique (chromosome, gene_name) "
+            "combinations are considered; ambiguous entries are excluded. "
+            "Each feature in the annotation is divided into bins of equal size to get relative signal locations across features of different length."
         )
     )
     parser_plot_metagene.add_argument(
         "-w", "--windows", type=str, nargs="+", required=True,
-        help="Path(s) to one or more tab-separated files containing significant editing windows. "
-        "Each file will be shown as a separate line in the plot."
+        help="""Input files separated by space. 
+        An input file is a filtered output file from a 'lodei find' call (e.g. windows_qfiltered_AG.txt)"""
     )
     parser_plot_metagene.add_argument(
         "-g", "--gff", type=str, required=True,
-        help="Path to GFF3 file containing gene annotations. Only unique (chromosome, gene_name) pairs are used."
+        help="Path to GFF3 file containing (gene) annotations. Only unique (chromosome, gene_name) pairs are used."
     )
     parser_plot_metagene.add_argument(
-        "-n", "--num-bins", type=int, default=5,
-        help="Number of bins to divide each gene into (default: 5, i.e. 20%% steps along the gene body)."
-    )
-    parser_plot_metagene.add_argument(
-        "--ylim", type=float, nargs=2, metavar=('YMIN', 'YMAX'),
-        help="Set y-axis limits, e.g. --ylim -40 -20"
-    )
-    parser_plot_metagene.add_argument(
-        "--wEI-signal", action="store_true",
-        help="Plot summed wEI signal per bin instead of number of significant windows."
+        "-n", "--num-bins", type=int, default=10,
+        help="Number of bins to divide each feature (gene) into (default: 5, i.e. 10% steps along the gene body)."
     )
     parser_plot_metagene.add_argument(
         "-o", "--output", required=True,
-        help="Output filename for the plot (e.g. metagene.png)."
+        help="Output filename for the plot (e.g. metagene.pdf)."
+    )
+    parser_plot_metagene.add_argument(
+        "--width", type=int, default=4,
+        help="Figure width in inch."
+    )
+    parser_plot_metagene.add_argument(
+        "--height", type=int, default=2,
+        help="Figure height in inch."
+    )
+    parser_plot_metagene.add_argument(
+        "-l", "--labels", type=str, nargs="+", required=False,
+        help="""Row labels."""
+    )
+    parser_plot_metagene.add_argument(
+        "--global", action="store_true",
+        help="By default each input file is normalized by its maximum value. Use this flag to normalize each input file by the maxium of all provided files."
     )
     parser_plot_metagene.set_defaults(func=plotmetagene.make_plot)
+
+    # --- plot_metagene heat---------
+    parser_plot_metagene_heat = subparsers.add_parser(
+        name="plotmetageneheat",
+        help="Visualizes the normalized differential editing signal across genomic features.",
+        description=(
+            "Plots the relative position of editing events across features (genes) for one or more input files."
+            "Each input file is shown as a separate row in the heatmap. "
+            "Annotations are taken from a GFF3 file. Only features with unique (chromosome, gene_name) "
+            "combinations are considered; ambiguous entries are excluded. "
+            "Each feature in the annotation is divided into bins of equal size to get relative signal locations across features of different length."
+        )
+    )
+    parser_plot_metagene_heat.add_argument(
+        "-w", "--windows", type=str, nargs="+", required=True,
+        help="""Input files separated by space. 
+        An input file is a filtered output file from a 'lodei find' call (e.g. windows_qfiltered_AG.txt)"""
+    )
+    parser_plot_metagene_heat.add_argument(
+        "-g", "--gff", type=str, required=True,
+        help="Path to a GFF3 file containing (gene) annotations to be plotted. Only unique (chromosome, gene_name) pairs are used."
+    )
+    parser_plot_metagene_heat.add_argument(
+        "-n", "--num-bins", type=int, default=10,
+        help="Number of bins to divide each feature (gene) into (default: 10, i.e. 10% steps along the gene body)."
+    )
+    parser_plot_metagene_heat.add_argument(
+        "-o", "--output", required=True,
+        help="Output filename for the plot (e.g. metagene_heat.pdf)."
+    )
+    parser_plot_metagene_heat.add_argument(
+        "--width", type=int, default=4,
+        help="Figure width in inch."
+    )
+    parser_plot_metagene_heat.add_argument(
+        "--height", type=int, default=2,
+        help="Figure height in inch."
+    )
+    parser_plot_metagene_heat.add_argument(
+        "-l", "--labels", type=str, nargs="+", required=False,
+        help="""Row labels."""
+    )
+    parser_plot_metagene_heat.add_argument(
+        "--global", action="store_true",
+        help="By default each input file is normalized by its maximum value. Use this flag to normalize each input file by the maxium of all provided files."
+    )
+    parser_plot_metagene_heat.set_defaults(func=plotmetagene.make_plot_heat)
 
     # --- convert ---------
     parser_convert = subparsers.add_parser(

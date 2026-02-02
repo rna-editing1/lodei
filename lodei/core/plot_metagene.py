@@ -19,15 +19,15 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import os
 
-mpl.rcParams['font.size'] = 8
+mpl.rcParams['font.size'] = 7
 mpl.rcParams['grid.color'] = '#b0b0b0'
 mpl.rcParams['grid.linestyle'] = (0, (2, 3))
 mpl.rcParams['grid.linewidth'] = 0.8
 mpl.rcParams['lines.linewidth'] = 1.5
 mpl.rcParams['legend.markerscale'] = 1
-mpl.rcParams['legend.fontsize'] = 8
+mpl.rcParams['legend.fontsize'] = 6
 
-lwd = 2.5
+lwd = 1.75
 
 
 def extract_gene_name(attributes):
@@ -77,72 +77,177 @@ def compute_relative_positions(merged):
     return rel
 
 
-def plot_metagene_hist(rel_list, labels, bins, output, title="", summed_signal=False, wEI_list=None, ylim=None):
-    fig, ax = plt.subplots(figsize=(8, 4.5))
+def plot_metagene_hist(ax, rel_list, labels,
+                       bins, wEI_list=None, norm_global=False):
+    ys = []
     for idx, (rel, label) in enumerate(zip(rel_list, labels)):
         bin_values = [0] * (len(bins) - 1)
-        bin_counts = [0] * (len(bins) - 1)
-        # If summed_signal: wEI_list must correspond to rel!
-        wEI = wEI_list[idx] if summed_signal else None
+        wEI = wEI_list[idx]
         for j, v in enumerate(rel):
             for i in range(len(bins) - 1):
                 if (v >= bins[i] and v < bins[i + 1]) or (i == len(bins) - 2 and v == bins[i + 1]):
-                    bin_counts[i] += 1
-                    if summed_signal and wEI is not None:
-                        bin_values[i] += wEI[j]
+                    bin_values[i] += wEI[j]
                     break
-        if summed_signal and wEI is not None:
             # Calculate sum of wEI per bin
-            y = bin_values + [bin_values[-1]]
-            ax.step(bins, y, where='post', label=label, linewidth=lwd)
+        ys.append(bin_values + [bin_values[-1]]) # + due to the step() function
+        #if wEI is not None:
+        #    ys.append(bin_values + [bin_values[-1]])
+        #else:
+        #    ys.append(np.zeros(len(bin_values)))
+    # for global rescaling
+    # print(ys)
+    # print(f"len(ys[0]): {len(ys[0])}")
+    # print(f"len(bins): {len(bins)}")
+    # print(f"bins: {bins}")
+    #x = []
+    #for i in range(len(bins)-1):
+    #    x.append(bins[i] + ( (bins[i+1] - bins[i])/2 ))
+    max_y = 0
+    for y in ys:
+        ym = np.max(np.abs(y))
+        if ym > max_y:
+            max_y = ym
+    for y, label in zip(ys, labels):
+        if norm_global:
+            y = np.array(y) / max_y
         else:
-            y = bin_counts + [bin_counts[-1]]
-            ax.step(bins, y, where='post', label=label, linewidth=lwd)
-    ax.set_xlabel("Relative gene position (5' → 3')")
-    ax.set_ylabel("Summed wEI signal" if summed_signal else "Number of significant windows")
-    ax.set_title(title)
+            y = np.array(y) / np.max(np.abs(y))
+            # print(y)
+        #ax.step(x, y, where='post', label=label, linewidth=lwd)
+        ax.step(bins, y, where='post', label=label, linewidth=lwd)
+    ax.set_xlabel("Relative position (5' → 3')")
+    ax.set_ylabel("Relative signal")
+    ax.set_ylim([-1.1, 1.1])
+    x = np.round(np.arange(0, 1.1, .1), 1)
+    ax.set_xticks(x, x)
     ax.legend(loc="best")
     ax.grid()
-    if ylim is not None:
-        ax.set_ylim(ylim)
-    fig.savefig(output, facecolor='#FFFFFF', bbox_inches='tight', pad_inches=0.1)
-    plt.close(fig)
 
 
 def make_plot(args):
-    gff_path = args["gff"]
-    txt_files = args["windows"]
     bins = int(args.get("num_bins"))
-    ylim = args.get("ylim", None)
-    summed_signal = args.get("wEI_signal", False)
-    output = args["output"]
 
     gff_df = pd.read_csv(
-        gff_path, sep='\t', comment='#', header=None,
+        args["gff"], sep='\t', comment='#', header=None,
         names=['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
     )
-    print(f"Loaded GFF file '{gff_path}' with {len(gff_df)} rows")
     gff_df = filter_unique_genes(gff_df)
 
-    rel_list = []
-    labels = []
-    wEI_list = []
-    for txt_file in txt_files:
-        windows_df = pd.read_csv(txt_file, sep="\t")
-        print(f"Loaded windows file '{txt_file}' with {len(windows_df)} rows")
+    if args["labels"] is None:
+        labels = [f"File {i}" for i in range(len(args["windows"]))]
+    else:
+        labels = args["labels"]
 
+    rel_list = []
+    wEI_list = []
+    for txt_file in args["windows"]:
+        windows_df = pd.read_csv(txt_file, sep="\t")
         merged = merge_windows_with_gff(windows_df, gff_df)
-        n_lost = len(windows_df) - len(merged)
-        if n_lost > 0:
-            print(f"Note: {n_lost} significant windows could not be matched because their gene name was duplicated in the GFF and thus removed from the analysis.")
-        
+
         rel = compute_relative_positions(merged)
         rel_list.append(rel)
-        labels.append(os.path.basename(txt_file))
-        if summed_signal:
-            # wEI must have the same order as rel!
-            wEI_list.append(merged["wEI"].values)
+        wEI_list.append(merged["wEI"].values)
     bin_edges = np.linspace(0, 1, bins + 1)
-    plot_metagene_hist(rel_list, labels, bin_edges, output,
-                       summed_signal=summed_signal,
-                       wEI_list=wEI_list if summed_signal else None, ylim=ylim)
+
+    fig, ax = plt.subplots()
+    fig.set_size_inches(args["width"], args["height"])
+    plot_metagene_hist(ax, rel_list, labels,
+                       bin_edges, wEI_list, args["global"])
+    fig.savefig(args["output"], facecolor='#FFFFFF', bbox_inches='tight', pad_inches=0.1)
+
+
+def make_plot_heat(args):
+    bins = int(args.get("num_bins"))
+
+    gff_df = pd.read_csv(
+        args["gff"], sep='\t', comment='#', header=None,
+        names=['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
+    )
+    gff_df = filter_unique_genes(gff_df)
+
+    if args["labels"] is None:
+        labels = [f"File {i}" for i in range(len(args["windows"]))]
+    else:
+        labels = args["labels"]
+
+    rel_list = []
+    wEI_list = []
+    for txt_file in args["windows"]:
+        windows_df = pd.read_csv(txt_file, sep="\t")
+        merged = merge_windows_with_gff(windows_df, gff_df)
+        # print(merged)
+        rel = compute_relative_positions(merged)
+        rel_list.append(rel)
+        wEI_list.append(merged["wEI"].values)
+        # print(rel)
+    bin_edges = np.linspace(0, 1, bins + 1)
+
+    fig = plt.figure()
+    fig.set_size_inches(args["width"], args["height"])
+    plot_metagene_heat(fig, rel_list, labels,
+                       bin_edges, wEI_list, args["global"])
+    fig.savefig(args["output"], facecolor='#FFFFFF', bbox_inches='tight', pad_inches=0.1)
+
+
+def plot_metagene_heat(fig, rel_list, labels,
+                       bins, wEI_list=None, norm_global=False):
+    ys = []
+    # print(f"bins: {bins}")
+    for idx, (rel, label) in enumerate(zip(rel_list, labels)):
+        bin_values = [0] * (len(bins) - 1)
+        wEI = wEI_list[idx]
+        for j, v in enumerate(rel):
+            for i in range(len(bins) - 1):
+                if (v >= bins[i] and v < bins[i + 1]):  # or (i == len(bins) - 2 and v == bins[i + 1]):
+                    # if wEI is not None:
+                    #    bin_values[i] += wEI[j]
+                    bin_values[i] += wEI[j]
+                    break
+        # print(f"bin_values: {bin_values}")
+        ys.append(bin_values)
+        #if wEI is not None:
+        #    ys.append(bin_values + [bin_values[-1]])
+        #else:
+        #    ys.append(np.zeros(len(bin_values)))
+    # print(ys)
+    max_y = 0
+    for y in ys:
+        ym = np.max(np.abs(y))
+        if ym > max_y:
+            max_y = ym
+    
+    mat = np.zeros((len(ys), len(ys[0])))
+    for i, y in enumerate(ys):
+        y = np.array(y)
+        #print(y / np.max(np.abs(y)))
+        if norm_global:
+            mat[i, :] = y / max_y
+        else:
+            mat[i, :] = y / np.max(np.abs(y))
+
+    ax_mat = fig.add_axes([0.25, 0.15, 0.65, 0.8])
+    ax_mat.imshow(mat, vmin=-1, vmax=1, cmap="bwr", aspect="auto")
+    ax_mat.set_yticks(np.arange(mat.shape[0]), labels)
+
+    x = np.round(np.arange(0, 1.1, .1), 1)
+    # print(f"shape: {mat.shape}")
+    xrel = x * (mat.shape[1])
+    xrel = np.array([int(xp * mat.shape[1]) - 0.5 for xp in x])
+    ax_mat.set_xticks(xrel, x)
+
+    ax_mat.set_xlabel("Relative position (5' → 3')")
+
+    cax = fig.add_axes([.93, .15, 0.015, 0.25])
+
+    cmap = plt.get_cmap('bwr')
+    norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+
+    cb = mpl.colorbar.ColorbarBase(
+        cax,
+        cmap=cmap,
+        norm=norm,
+        orientation='vertical',
+        ticks=[-1, 0, 1]
+    )
+    cb.set_ticklabels(['-1', ' 0', ' 1'])
+    cb.set_label('Intensity')
