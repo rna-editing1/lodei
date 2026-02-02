@@ -120,7 +120,7 @@ def plot_metagene_hist(ax, rel_list, labels,
     ax.set_ylim([-1.1, 1.1])
     x = np.round(np.arange(0, 1.1, .1), 1)
     ax.set_xticks(x, x)
-    ax.legend(loc="best")
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
     ax.grid()
 
 
@@ -150,6 +150,7 @@ def make_plot(args):
     bin_edges = np.linspace(0, 1, bins + 1)
 
     fig, ax = plt.subplots()
+    # fig = plt.figure()
     fig.set_size_inches(args["width"], args["height"])
     plot_metagene_hist(ax, rel_list, labels,
                        bin_edges, wEI_list, args["global"])
