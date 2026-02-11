@@ -31,7 +31,6 @@ Prior to installation, we recommend to follow the instructions of the provided [
 Install LoDEI by using one of the following ways:
 
 1. use the [conda/mamba](#installation-and-usage-via-conda) package manager to install LoDEI.
-2. use the provided [Podman/Docker](#installation-and-usage-via-podman) image.
 3. [build](#build-the-image-via-the-containerfile) a Podman/Docker image locally by using the provided Containerfile.
 
 
@@ -163,30 +162,9 @@ Wait until LoDEI finishes the calculation (~1-2min) and have a look at the [outp
 Common Linux distributions are typically shipped with Podman. Podman is a tool to create, run and maintain containers.
 For a detailed introduction of Podman we refer the reader to the primary documentation at https://podman.io.
 
-### Installation
+### Build the image via the Containerfile
 
-You can either pull the container image from DockerHub or
-you build the image locally by using the provided Containerfile.
-
-#### Get the image via DockerHub
-
-Get the container image from DockerHub (https://hub.docker.com/r/lodei/lodei) via 
-
-```
-podman pull docker.io/lodei/lodei:latest
-```
-
-Verify that the new image is part of your container image storage. You should find an entry similar to the example shown below:
-
-```
-podman images
-REPOSITORY                     TAG         IMAGE ID      CREATED         SIZE
-docker.io/lodei/lodei          latest      ea6601c991f9  42 minutes ago  2.3 GB
-```
-
-#### Build the image via the Containerfile
-
-If you didn't pull the image from DockerHub you can build the image locally:
+Let's build the image locally:
 
 ```
 cd ~  # enter your home directory 
@@ -200,11 +178,7 @@ podman build -f Containerfile -t lodei
 Verify that podman is able to start LoDEI by trying to run the new container:
 
 ```
-# if you've got the image from DockerHub:
-podman run --rm docker.io/lodei/lodei:latest lodei find -h
-
-# if you've build your image locally:
-podman run -it --rm --name lodeitest localhost/lodei lodei find -h
+podman run -it --rm localhost/lodei:latest lodei find -h
 ```
 
 If your container runs successfully, 
@@ -247,7 +221,7 @@ podman run --rm \
 -v ~/example/data_testrun/annotation:/annotation:ro \
 -v ~/example/data_testrun/bam:/bam:ro \
 -v ~/example/output_test:/output:rw \
-docker.io/lodei/lodei:latest lodei find \
+localhost/lodei:latest lodei find \
 --group1 /bam/s01.bam /bam/s02.bam /bam/s03.bam /bam/s04.bam /bam/s05.bam \
 --group2 /bam/s06.bam /bam/s07.bam /bam/s08.bam /bam/s09.bam /bam/s10.bam \
 -f /annotation/genome.fa \
@@ -306,7 +280,7 @@ The primary outputs are BED-format-like plaintext files containing the genomic c
 | strand | Defines the strand where the differential signals was detected. Either "+" or "-" (char) |
 | q_value | Calculated q value of the detected wEI signal (float)|
 
-LoDEI computes differential signals for all possible mismatch pairs. As a consequence, for each nucleotide mismatch X and Y an output file is generated according to the following scheme `/windows/windows_XY.txt` where X and Y are the nucleotide mismatches. Consequently, the file `/windows/windows_AG.txt` should be examined in case of A-to-I editing.
+LoDEI computes differential signals for all possible mismatch pairs. As a consequence, for each nucleotide mismatch X and Y an output file is generated according to the following scheme `/windows/windows_XY.txt` where X and Y are the nucleotide mismatches. Consequently, the file `/windows/windows_AG.txt` should be examined in case of A-to-I editing. Note, that the nucleotides mismatches X and Y refer to the 5'-3' orientation. If you are interested analyzing A-to-I editing you only need to look at the `_AG.txt` files. LoDEI properly handles the mismatch detection with respect to the used sequencing library and strand orientation of RNAs internally.
 
 The results of all mismatches are located in the sub-directoy `/windows` in the output directory:
 
