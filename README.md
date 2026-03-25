@@ -148,7 +148,7 @@ Detailed explanation of parameters and arguments:
     Currently, the following types are supported:  
     SR = reverse stranded,  
     SF = forward stranded,  
-    U = unstranded  
+    U = unstranded  (also use `U` for `IU`)  
     ISR = paired-end, reverse stranded  
     ISF = paired-end, forward stranded,  
     If you are unsure what kind of library type (strandedness) your data is, have a look at the [FAQ](#how-do-i-infer-the-library-type-(strandedness)-of-my-data) and 
@@ -259,10 +259,10 @@ Detailed explanation of parameters and arguments:
     Currently, the following types are supported:  
     SR = reverse stranded,  
     SF = forward stranded,  
-    U = unstranded  
+    U = unstranded  (also use `U` for `IU`)  
     ISR = paired-end, reverse stranded  
     ISF = paired-end, forward stranded,  
-    If you are unsure what kind of library type (strandedness) your data is, have a look at the [FAQ](#how-do-i-infer-the-library-type-(strandedness)-of-my-data) and 
+    If you are unsure what kind of library type (strandedness) your data is, have a look at the [FAQ](#how-do-i-infer-the-library-type-of-my-data) and 
     https://github.com/rna-editing1/getlibtype
 * `--min_coverage 5`
     * only consider single positions that have a coverage >= min_coverage in all samples.
@@ -323,7 +323,7 @@ Since LoDEI requires sorted BAM files as input the following steps/programs are 
 * `lodei` for differential RNA editing analysis.
 
 Keep in mind to set the `--library` parameter of `lodei` properly. 
-If you are unsure what kind of library type (strandedness) your data is, have a look at the [FAQ](#how-do-i-infer-the-library-type-(strandedness)-of-my-data) and https://github.com/rna-editing1/getlibtype
+If you are unsure what kind of library type (strandedness) your data is, have a look at the [FAQ](#how-do-i-infer-the-library-type-of-my-data) and https://github.com/rna-editing1/getlibtype
 
 
 ## FAQ
@@ -349,7 +349,7 @@ grep -P  "gene\t.*gene_type=protein_coding" gencode.v47.basic.annotation.gff3 > 
 Short answer: if you are unsure, yes. 
 Long answer: If you compare datasets from the same cell line you typically don't need that option. If the sets that you compare against each other contain sequencing data from different cells/samples/patients/etc. you should use this option. 
 
-### How do I infer the library type (strandedness) of my data?
+### How do I infer the library type of my data?
 
 To run LoDEI it is required to specify the library type for your sequencing data via the `--library` parameter. 
 We provide the additional small program `getlibtype` here https://github.com/rna-editing1/getlibtype to help you identifying your library type.
