@@ -150,7 +150,9 @@ Detailed explanation of parameters and arguments:
     SF = forward stranded,  
     U = unstranded  
     ISR = paired-end, reverse stranded  
-    ISF = paired-end, forward stranded
+    ISF = paired-end, forward stranded,  
+    If you are unsure what kind of library type (strandedness) your data is, have a look at the [FAQ](#how-do-i-infer-the-library-type-(strandedness)-of-my-data) and 
+    https://github.com/rna-editing1/getlibtype  
 * `--min_coverage 5`
   * only consider single positions that have a coverage >= min_coverage in all samples.
 * [Should I use](#should-i-use---rm_snps) `--rm_snps`?
@@ -259,7 +261,9 @@ Detailed explanation of parameters and arguments:
     SF = forward stranded,  
     U = unstranded  
     ISR = paired-end, reverse stranded  
-    ISF = paired-end, forward stranded
+    ISF = paired-end, forward stranded,  
+    If you are unsure what kind of library type (strandedness) your data is, have a look at the [FAQ](#how-do-i-infer-the-library-type-(strandedness)-of-my-data) and 
+    https://github.com/rna-editing1/getlibtype
 * `--min_coverage 5`
     * only consider single positions that have a coverage >= min_coverage in all samples.
 * [Should I use](#should-i-use---rm_snps) `--rm_snps`?
@@ -308,6 +312,20 @@ windows
 If windows achieve a q value < 0.1, LoDEI creates additional output files for each mismatch pair for windows with a q value < 0.1 according to the naming scheme `windows_qfiltered_XY.txt`, where X and Y are the nucleotide mismatches.
 
 
+## Getting Started
+
+Since LoDEI requires sorted BAM files as input the following steps/programs are typically performed/run prior to running LoDEI:
+
+* `fastqc` / `multiqc` for quality control of the data
+* `cutadapt` for quality filtering of the reads. The `-q` parameter specifies the quality filtering. A value of at least 20 (`-q 20`) is recommended.
+* `STAR` for aligning RNA-seq data to the reference
+* `samtools` for sorting and indexing the BAM files obtained from `STAR`.
+* `lodei` for differential RNA editing analysis.
+
+Keep in mind to set the `--library` parameter of `lodei` properly. 
+If you are unsure what kind of library type (strandedness) your data is, have a look at the [FAQ](#how-do-i-infer-the-library-type-(strandedness)-of-my-data) and https://github.com/rna-editing1/getlibtype
+
+
 ## FAQ
 
 ### What kind of annotation file do I need to use?
@@ -330,5 +348,23 @@ grep -P  "gene\t.*gene_type=protein_coding" gencode.v47.basic.annotation.gff3 > 
 
 Short answer: if you are unsure, yes. 
 Long answer: If you compare datasets from the same cell line you typically don't need that option. If the sets that you compare against each other contain sequencing data from different cells/samples/patients/etc. you should use this option. 
+
+### How do I infer the library type (strandedness) of my data?
+
+To run LoDEI it is required to specify the library type for your sequencing data via the `--library` parameter. 
+We provide the additional small program `getlibtype` here https://github.com/rna-editing1/getlibtype to help you identifying your library type.
+LoDEI uses the same library type specification as Salmon (https://salmon.readthedocs.io/en/latest/library_type.html). 
+`getlibtype` is a small wrapper for `salmon` that utilizes `salmon` only for the library type detection. 
+
+### Why is the library type so important?
+
+Detecting RNA editing is based on scanning for mismatches between the sequencing data and the reference genome. 
+In case of A-to-I editing, publications typically refer to the analysis of A/G mismatches between the reads and the reference. This description is correct from the perspective of 5'-3' transcript orientation and transcripts that originate from genes from the forward strand.
+Unfortunately, transcripts can be located on the forward or reverse strand of the genome and the used sequencing chemistry has an impact on the type of mismatches with respect to the relative orientation of transcripts. 
+In other words, the type of mismatch to look at is dependent on the location of the gene (forward or reverse) and the underlying sequencing chemistry. 
+To ease the analysis and not getting down into this rabbit hole, LoDEI takes care of all of this internally.
+
+
+
 
 
